@@ -122,9 +122,19 @@ def main():
 
     # ── ArcFace ───────────────────────────────────────────────────────────────
     print('#. ArcFace IR-SE50 ...')
-    arcface_path = osp.join(pretrained_root, 'arcface', 'model_ir_se50.pth')
+    arcface_dir = osp.join(pretrained_root, 'arcface')
+    arcface_path = osp.join(arcface_dir, 'model_ir_se50.pth')
+    e4e_arcface_path = osp.join(e4e_dir, 'model_ir_se50.pth')
     if not osp.exists(arcface_path):
-        _download(*ARCFACE, dest_dir=pretrained_root)
+        if osp.exists(e4e_arcface_path):
+            os.makedirs(arcface_dir, exist_ok=True)
+            if osp.lexists(arcface_path):
+                os.remove(arcface_path)
+            rel_target = osp.relpath(e4e_arcface_path, arcface_dir)
+            os.symlink(rel_target, arcface_path)
+            print(f'   Symlinked {arcface_path} -> {rel_target}')
+        else:
+            _download(*ARCFACE, dest_dir=pretrained_root)
     else:
         print('   Already present — skipping.')
 
