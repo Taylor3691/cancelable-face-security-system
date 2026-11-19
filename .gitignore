@@ -1,0 +1,35 @@
+## LaTeX Auxiliary and Build Files
+*.aux
+*.bbl
+*.bcf
+*.blg
+*.dvi
+*.fdb_latexmk
+*.fls
+*.glg
+*.glo
+*.gls
+*.idx
+*.ilg
+*.ind
+*.ist
+*.log
+*.lof
+*.lot
+*.nav
+*.out
+*.run.xml
+*.snm
+*.synctex
+*.synctex(busy)
+*.synctex.gz
+*.toc
+*.vrb
+*.xdv
+
+# TeX auxiliary directories
+_minted-*/
+auto/
+
+# Keep generated PDF files
+!*.pdf
