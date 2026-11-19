@@ -22,9 +22,9 @@
 #           └── 0001.jpg
 #
 DATASETS = {
-    'sample_IJB-C': '/path/to/your/dataset',   # <-- UPDATE THIS
-    # 'vggface2':    '/path/to/vggface2',
-    # 'celebahq':    '/path/to/celebahq',
+    # 'sample_IJB-C': '/path/to/your/dataset',   # <-- UPDATE THIS
+    'vggface2':    'datasets/vggface2',
+    'celebahq':    'datasets/celebahq',
 }
 
 CelebA_classes = (
