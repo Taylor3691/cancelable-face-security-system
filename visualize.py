@@ -113,6 +113,7 @@ def main():
         inv=args.inv,
         anon=args.anon,
         use_facial_identity=True,
+        dataset_name=args.dataset,
     )
     loader = data.DataLoader(dataset, batch_size=args.batch_size,
                              shuffle=args.shuffle)

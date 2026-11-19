@@ -52,6 +52,7 @@ class CelebAHQ(data.Dataset):
                  inv: bool = False,
                  anon=None,
                  use_facial_identity: bool = True,
+                 dataset_name: str = 'sample_IJB-C',
                  transform=transforms.Compose([transforms.ToTensor()])):
 
         self.root_dir           = root_dir
@@ -66,9 +67,10 @@ class CelebAHQ(data.Dataset):
             raise ValueError(f'Invalid subset: {subset!r}')
         self.subset = subset
 
-        # Inversion paths
-        self.inv_data_dir  = osp.join('datasets', 'inv_pivot', 'sample_IJB-C', 'data')
-        self.inv_codes_dir = osp.join('datasets', 'inv_pivot', 'sample_IJB-C', 'latent_codes')
+        # Inversion paths (matches invert.py output: reconstructed/ and latents/)
+        inv_root = osp.join('datasets', 'inv_pivot', dataset_name)
+        self.inv_data_dir  = osp.join(inv_root, 'reconstructed')
+        self.inv_codes_dir = osp.join(inv_root, 'latents')
 
         if anon and not osp.isdir(anon):
             raise NotADirectoryError(f'Anonymized dataset directory not found: {anon}')
@@ -163,10 +165,13 @@ class CelebAHQ(data.Dataset):
         img_nn      = torch.zeros_like(img_orig)
         img_nn_code = torch.zeros(18, 512)
         if self.fake_nn_map is not None:
-            nn_key = self.nn_map_dict.get(img_basename)
+            id_folder = osp.basename(osp.dirname(img_path))
+            rel_key = osp.join(id_folder, img_basename)
+            nn_key = self.nn_map_dict.get(rel_key) or self.nn_map_dict.get(img_basename)
             if nn_key:
-                nn_img_path  = osp.join(self.fake_dataset_root, nn_key, 'image.jpg')
-                nn_code_path = osp.join(self.fake_dataset_root, nn_key, 'latent_code_w+.pt')
+                fake_dir = osp.dirname(nn_key) if nn_key.endswith(('.jpg', '.jpeg', '.png')) else nn_key
+                nn_img_path  = osp.join(self.fake_dataset_root, fake_dir, 'image.jpg')
+                nn_code_path = osp.join(self.fake_dataset_root, fake_dir, 'latent_code_w+.pt')
                 if osp.isfile(nn_img_path):
                     img_nn = self.transform(Image.open(nn_img_path).convert('RGB'))
                 if osp.isfile(nn_code_path):

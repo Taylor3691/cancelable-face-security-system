@@ -165,6 +165,7 @@ def main():
         fake_nn_map=args.fake_nn_map,
         inv=True,
         use_facial_identity=True,
+        dataset_name=args.dataset,
     )
     loader = data.DataLoader(dataset, batch_size=1, shuffle=False)
 
