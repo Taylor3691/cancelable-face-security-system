@@ -5,13 +5,10 @@ This module provides:
     - ``build_generator``: factory that constructs a StyleGAN2 generator.
     - ``EqualLinear``    : weight-equalised linear layer (used by e4e encoders).
 
-If the full GenForce source tree has been cloned via ``scripts/setup_genforce.sh``
+If the full GenForce model files are present in ``models/genforce/``,
 the real GenForce implementations are imported transparently.  Otherwise a
 minimal self-contained implementation is used so that the rest of the codebase
-can be imported and used without requiring the GenForce submodule.
-
-Run ``bash scripts/setup_genforce.sh`` once to install the full GenForce
-generators (needed for training / inference).
+can be imported without requiring the full GenForce tree.
 """
 
 from __future__ import annotations
@@ -29,9 +26,7 @@ import torch.nn.functional as F
 # ---------------------------------------------------------------------------
 _GENFORCE_AVAILABLE = False
 try:
-    # If setup_genforce.sh has been run, the actual model files live next to
-    # this shim inside models/genforce/.
-    from .stylegan_generator import StyleGAN2Generator  # type: ignore
+    from .stylegan2_generator import StyleGAN2Generator  # type: ignore
     _GENFORCE_AVAILABLE = True
 except ImportError:
     pass
@@ -137,11 +132,8 @@ class _MinimalStyleGAN2(nn.Module):
     that the rest of FaceAnonyMixer works unchanged.
 
     **Important:** this minimal version does NOT implement the full synthesis
-    network.  It is provided only so that the codebase can be imported and
-    the latent-space operations (inversion, mixing, optimization) can run once
-    the real checkpoint has been loaded via ``load_state_dict``.  If you need
-    actual image generation, run ``bash scripts/setup_genforce.sh`` to install
-    the full GenForce implementation.
+    network.  It is provided only as a fallback when ``stylegan2_generator.py``
+    is not available.
     """
 
     def __init__(self, resolution=1024, z_space_dim=512, w_space_dim=512,
@@ -182,13 +174,93 @@ class _MinimalStyleGAN2(nn.Module):
         if it has not been installed.
         """
         raise RuntimeError(
-            'The full GenForce synthesis network is required to decode images.\n'
-            'Run:  bash scripts/setup_genforce.sh\n'
-            'then re-run your script.'
+            'The full GenForce synthesis network is required to decode images, '
+            'but models/genforce/stylegan2_generator.py could not be imported.'
         )
 
     def forward(self, wp: torch.Tensor) -> torch.Tensor:
         return self.synthesis(wp)
+
+
+# ---------------------------------------------------------------------------
+# Wrapper around GenForce StyleGAN2Generator for FaceAnonyMixer API
+# ---------------------------------------------------------------------------
+
+if _GENFORCE_AVAILABLE:
+    class _GenForceStyleGAN2(StyleGAN2Generator):
+        """Adapter exposing ``n_latent``, ``get_w``, ``get_s``, and W+/S forward."""
+
+        def __init__(self,
+                     resolution: int,
+                     image_channels: int = 3,
+                     z_space_dim: int = 512,
+                     w_space_dim: int = 512,
+                     num_mapping_layers: int = 8,
+                     latent_is_w: bool = False,
+                     latent_is_s: bool = False,
+                     **kwargs):
+            super().__init__(
+                resolution=resolution,
+                image_channels=image_channels,
+                z_space_dim=z_space_dim,
+                w_space_dim=w_space_dim,
+                mapping_layers=num_mapping_layers,
+                **kwargs,
+            )
+            self.latent_is_w = latent_is_w
+            self.latent_is_s = latent_is_s
+            self.n_latent = self.num_layers
+
+        def get_w(self, z: torch.Tensor, truncation: float = 1.0) -> torch.Tensor:
+            w = self.mapping(z)['w']
+            return self.truncation(w, trunc_psi=truncation, trunc_layers=self.num_layers)
+
+        def get_s(self, wp: torch.Tensor) -> dict:
+            with torch.no_grad():
+                arch = self.synthesis.architecture
+                if arch in ('origin', 'skip'):
+                    res = {'wp': wp}
+                    last_layer_idx = self.num_layers - 2
+                    for layer_idx in range(self.num_layers - 1):
+                        layer = getattr(self.synthesis, f'layer{layer_idx}')
+                        res[f'style{layer_idx:02d}'] = layer.forward_style(
+                            wp[:, layer_idx]
+                        )
+                        if arch == 'skip' and layer_idx % 2 == 0:
+                            out_layer = getattr(
+                                self.synthesis, f'output{layer_idx // 2}'
+                            )
+                            res[f'output_style{layer_idx // 2}'] = (
+                                out_layer.forward_style(wp[:, layer_idx + 1])
+                            )
+                    if arch == 'origin':
+                        out_layer = getattr(
+                            self.synthesis, f'output{last_layer_idx // 2}'
+                        )
+                        res[f'output_style{last_layer_idx // 2}'] = (
+                            out_layer.forward_style(wp[:, last_layer_idx + 1])
+                        )
+                    return res
+
+                res = self.synthesis(wp)
+                return {
+                    k: v for k, v in res.items()
+                    if k == 'wp' or k.startswith(('style', 'output_style'))
+                }
+
+        def forward(self, x, *args, **kwargs):
+            if isinstance(x, dict):
+                return self.synthesis(x['wp'])['image']
+            if self.latent_is_w:
+                if x.ndim == 2:
+                    x = x.unsqueeze(1).repeat(1, self.num_layers, 1)
+                return self.synthesis(x)['image']
+            if self.latent_is_s:
+                raise TypeError(
+                    'When latent_is_s=True, forward() expects a styles dict '
+                    'returned by get_s(wp).'
+                )
+            return super().forward(x, *args, **kwargs)['image']
 
 
 # ---------------------------------------------------------------------------
@@ -205,9 +277,8 @@ def build_generator(resolution: int,
                     **kwargs) -> nn.Module:
     """Construct and return a StyleGAN2 generator.
 
-    If the full GenForce ``StyleGAN2Generator`` class has been imported
-    (i.e. ``scripts/setup_genforce.sh`` has been run), that class is
-    instantiated.  Otherwise the minimal fallback is used.
+    If the full GenForce ``StyleGAN2Generator`` class is available,
+    ``_GenForceStyleGAN2`` is instantiated.  Otherwise the minimal fallback is used.
 
     Args:
         resolution           : output image resolution (e.g. 1024).
@@ -222,7 +293,7 @@ def build_generator(resolution: int,
         nn.Module: generator instance.
     """
     if _GENFORCE_AVAILABLE:
-        return StyleGAN2Generator(
+        return _GenForceStyleGAN2(
             resolution=resolution,
             image_channels=image_channels,
             z_space_dim=z_space_dim,

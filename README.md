@@ -63,10 +63,10 @@ faceanonymixer/
 │       ├── helpers.py        # Shared IR bottleneck blocks
 │       └── psp_encoders.py   # GradualStyleEncoder, Encoder4Editing
 │
-├── models/genforce/          # Populated by scripts/setup_genforce.sh
+├── models/genforce/          # GenForce StyleGAN2 model definitions
 │
 ├── scripts/
-│   └── setup_genforce.sh     # Clone GenForce into models/genforce/
+│   └── prepare_dataset.py    # Prepare dataset layout
 │
 ├── requirements.txt
 ├── LICENSE
@@ -85,10 +85,7 @@ cd faceanonymixer
 # 2. Install Python dependencies
 pip install -r requirements.txt
 
-# 3. Set up the GenForce model definitions
-bash scripts/setup_genforce.sh
-
-# 4. Download all pretrained weights
+# 3. Download all pretrained weights
 #    (StyleGAN2-FFHQ-1024, e4e, ArcFace, FaRL ep64, SFD detector)
 python download_pretrained.py
 ```
