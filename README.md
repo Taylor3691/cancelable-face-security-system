@@ -65,11 +65,6 @@ faceanonymixer/
 │
 ├── models/genforce/          # Populated by scripts/setup_genforce.sh
 │
-├── utils1/
-│   ├── __init__.py
-│   ├── ImagesDataset.py      # Simple flat image dataset
-│   └── data_utils.py         # make_dataset helper
-│
 ├── scripts/
 │   └── setup_genforce.sh     # Clone GenForce into models/genforce/
 │
