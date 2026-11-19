@@ -29,12 +29,12 @@ venv/
 Thumbs.db
 
 # Project runtime outputs (do not commit datasets or experiment results)
-datasets/
-experiments/
-viz/
+datasets
+experiments
+viz
 
 # Pretrained model weights (downloaded separately)
-models/pretrained/
+models/pretrained
 
 # Temporary / fine-tuned generator snapshots
 *.pth
