@@ -3,5 +3,10 @@
 
 \subsection{Nguyên lý}
 
-Mục tiêu của phương pháp bài muốn xây dựng quy trình tạo ra khuôn mặt được bảo vệ đáp ứng được đầy đủ chuẩn ISO/IEC24745 và tạo ra được khuôn mặt tự nhiên. Khác với các phương pháp che dấu danh tính khác, tác giả tận dụng đưa khuôn mặt vào trong không gian ẩn của các mô hình tạo sinh đã được tiền huấn luyện (cụ thể là styleGAN), thực hiện biến đổi dựa trên tín hiệu đưa vào (còn gọi là chìa khóa). Để khuôn mặt được tự nhiên và sắc nét, người ta thiết kế ba hàm mất mát để điều chỉnh kết quả. 
+Mục tiêu của phương pháp bài muốn xây dựng quy trình tạo ra khuôn mặt được bảo vệ đáp ứng được đầy đủ chuẩn ISO/IEC24745 và tạo ra được khuôn mặt tự nhiên. Khác với các phương pháp che dấu danh tính khác, tác giả tận dụng đưa khuôn mặt vào trong không gian ẩn của các mô hình tạo sinh đã được tiền huấn luyện (cụ thể là StyleGAN), thực hiện biến đổi dựa trên tín hiệu đưa vào (còn gọi là chìa khóa). Để khuôn mặt được tự nhiên và sắc nét, người ta thiết kế ba hàm mất mát để điều chỉnh kết quả.
 
+Không gian tiềm ẩn StyleGAN gồm 18 tầng xác định thông tin các mức ngữ nghĩa khác nhau. Tác giả mong muốn thay đổi tầng 3-7, nơi biểu diễn các đặc trưng gắn liền với danh tính, trong khi đó vẫn giữ nguyên các tầng 0-2 (kiểm soát cấu trúc tổng thể thô như tư thế đầu, hình dáng khuôn mặt) và tầng 8-17 (lưu giữ các chi tiết mịn như tóc, phông nền, ánh sáng). Mô hình biến đổi khóa có thể hủy, khởi tạo khóa thành mã biểu diễn thành một cấu trúc 18 tầng trong không gian của StyleGAN. Sau đó đưa thông tin tin đã khởi tạo của tầng 3-7 thay thế tầng chứa thông tin định danh của cấu trúc biểu diễn danh tính thật. Tác giả tận dụng kỹ thuật Style Mixing, mô hình tự động dung hòa thành một khuôn mặt hợp lý về mặt giải phẫu và ánh sáng.
+
+Ảnh sinh ra đôi khi vẫn hơi sượng và mất biểu cảm, vì thế hệ thống tác giả đề xuất chạy thêm 50 vòng lặp để tối ưu. Bài báo sử dụng ba hàm mất mát, trong đó có hai hàm tăng khả năng nhận diện, hàm còn lại có chức năng kéo các chi tiết như nụ cười, hướng nhìn cho giống với ảnh gốc.
+
+\subsection{Phát biểu bài toán}
