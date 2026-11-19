@@ -1,4 +1,4 @@
-from .aux import tensor2image, anon_exp_dir, DataParallelPassthrough
+from .auxiliary import tensor2image, anon_exp_dir, DataParallelPassthrough
 from .config import (
     GENFORCE, GENFORCE_MODELS, STYLEGAN_LAYERS,
     STYLEGAN2_STYLE_SPACE_LAYERS, STYLEGAN2_STYLE_SPACE_TARGET_LAYERS,
