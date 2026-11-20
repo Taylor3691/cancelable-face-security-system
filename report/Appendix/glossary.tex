@@ -19,22 +19,27 @@
 4 & CanFG & Cancelable Face Generator -- Bộ sinh khuôn mặt có thể hủy \\
 5 & CFB & Cancelable Face Biometrics -- Sinh trắc học khuôn mặt có thể hủy \\
 6 & DL & Deep Learning -- Học sâu \\
-7 & e4e & Encoder for Editing -- Bộ mã hóa phục vụ chỉnh sửa \\
-8 & EER & Equal Error Rate -- Tỷ lệ lỗi cân bằng \\
-9 & FaRL & Facial Representation Learning -- Học biểu diễn khuôn mặt đa phương thức \\
-10 & FID & Fréchet Inception Distance -- Khoảng cách Fréchet Inception \\
-11 & FMR & False Match Rate -- Tỷ lệ chấp nhận nhầm \\
-12 & FNMR & False Non-Match Rate -- Tỷ lệ từ chối nhầm \\
-13 & FR & Face Recognition -- Nhận dạng khuôn mặt \\
-14 & GAN & Generative Adversarial Network -- Mạng đối sinh \\
-15 & ISO/IEC & International Organization for Standardization / International Electrotechnical Commission -- Tổ chức Tiêu chuẩn hóa Quốc tế / Ủy ban Kỹ thuật Điện Quốc tế \\
-16 & MLP & Multi-Layer Perceptron -- Mạng nơ-ron đa tầng \\
-17 & MTCNN & Multi-task Cascaded Convolutional Networks -- Mạng tích chập phân tầng đa nhiệm \\
-18 & PSR & Protection Success Rate -- Tỷ lệ bảo vệ thành công \\
-19 & ROC & Receiver Operating Characteristic -- Đường cong đặc trưng hoạt động bộ thu \\
-20 & SOTA & State-of-the-Art -- Tiên tiến nhất hiện nay \\
-21 & StyleGAN & Style-based Generative Adversarial Network -- Mạng đối sinh dựa trên phong cách \\
-22 & ViT & Vision Transformer -- Mô hình Transformer cho thị giác máy tính \\
+7 & DoS & Denial of Service -- Tấn công từ chối dịch vụ \\
+8 & e4e & Encoder for Editing -- Bộ mã hóa phục vụ chỉnh sửa \\
+9 & EER & Equal Error Rate -- Tỷ lệ lỗi cân bằng \\
+10 & FAR & False Accept Rate -- Tỷ lệ chấp nhận sai \\
+11 & FaRL & Facial Representation Learning -- Học biểu diễn khuôn mặt đa phương thức \\
+12 & FID & Fréchet Inception Distance -- Khoảng cách Fréchet Inception \\
+13 & FMR & False Match Rate -- Tỷ lệ chấp nhận nhầm \\
+14 & FNMR & False Non-Match Rate -- Tỷ lệ từ chối nhầm \\
+15 & FR & Face Recognition -- Nhận dạng khuôn mặt \\
+16 & FRR & False Reject Rate -- Tỷ lệ từ chối sai \\
+17 & GAN & Generative Adversarial Network -- Mạng đối sinh \\
+18 & ISO/IEC & International Organization for Standardization / International Electrotechnical Commission -- Tổ chức Tiêu chuẩn hóa Quốc tế / Ủy ban Kỹ thuật Điện Quốc tế \\
+19 & MLP & Multi-Layer Perceptron -- Mạng nơ-ron đa tầng \\
+20 & MTCNN & Multi-task Cascaded Convolutional Networks -- Mạng tích chập phân tầng đa nhiệm \\
+21 & OTB-Morph & One-Time Biometrics via Morphing -- Sinh trắc học dùng một lần bằng lai ghép ảnh \\
+22 & PSR & Protection Success Rate -- Tỷ lệ bảo vệ thành công \\
+23 & ROC & Receiver Operating Characteristic -- Đường cong đặc trưng hoạt động bộ thu \\
+24 & SOTA & State-of-the-Art -- Tiên tiến nhất hiện nay \\
+25 & StyleGAN & Style-based Generative Adversarial Network -- Mạng đối sinh dựa trên phong cách \\
+26 & TPS & Thin-Plate Spline -- Nội suy bản mỏng \\
+27 & ViT & Vision Transformer -- Mô hình Transformer cho thị giác máy tính \\
 \end{longtable}
 \addtocounter{table}{-1}
 }
@@ -57,34 +62,46 @@
 \endfoot
 1 & Anonymity & Tính ẩn danh \\
 2 & Artifact & Biến dạng giả / Nhiễu nhân tạo \\
-3 & Attribute Preservation & Bảo toàn thuộc tính (phi danh tính) \\
-4 & Augmentation & Tăng cường dữ liệu / Tạo biến thể \\
-5 & Black-box & Kịch bản hộp đen \\
-6 & Cancelable Biometrics & Sinh trắc học có thể hủy \\
-7 & Confidence Score & Điểm tin cậy (tương đồng) \\
-8 & Cross-matching & Đối chiếu chéo (liên kết danh tính) \\
-9 & Disentanglement & Tách biệt thuộc tính (trong không gian tiềm ẩn) \\
-10 & Feature-space & Không gian đặc trưng \\
-11 & GAN Inversion & Đảo ngược GAN (chiếu ảnh vào không gian tiềm ẩn) \\
-12 & Grid / Image Morphing & Biến dạng lưới / Lai ghép ảnh hình học \\
-13 & Identity Preservation & Bảo toàn danh tính \\
-14 & Image-space & Không gian ảnh (thô) \\
-15 & Irreversibility & Tính không thể đảo ngược \\
-16 & Key Mapping & Ánh xạ khóa \\
-17 & Latent Code & Mã tiềm ẩn \\
-18 & Latent Space & Không gian tiềm ẩn \\
-19 & Loss Function & Hàm mất mát \\
-20 & Na\"ive Mixing & Phép trộn thô / Trộn khởi tạo \\
-21 & Optimization Loop & Vòng lặp tối ưu hóa \\
-22 & Performance Preservation & Bảo toàn hiệu năng (nhận dạng) \\
-23 & Pre-trained & Tiền huấn luyện \\
-24 & Protected Face & Khuôn mặt được bảo vệ \\
-25 & Random Seed & Hạt giống ngẫu nhiên \\
-26 & Revocability & Tính khả hủy (thu hồi và cấp lại) \\
-27 & Skip-connection & Liên kết tắt \\
-28 & Style Mixing & Hòa trộn phong cách \\
-29 & Test-time Optimization & Tối ưu hóa ở pha suy luận \\
-30 & Unlinkability & Tính không thể liên kết \\
+3 & Attack Tree & Cây tấn công \\
+4 & Attribute Preservation & Bảo toàn thuộc tính (phi danh tính) \\
+5 & Augmentation & Tăng cường dữ liệu / Tạo biến thể \\
+6 & Biometric System Security & Bảo mật hệ thống sinh trắc học \\
+7 & Black-box & Kịch bản hộp đen \\
+8 & Cancelable Biometrics & Sinh trắc học có thể hủy \\
+9 & Confidence Score & Điểm tin cậy (tương đồng) \\
+10 & Control Grid & Lưới điểm neo / Lưới điều khiển \\
+11 & Cross-matching & Đối chiếu chéo (liên kết danh tính) \\
+12 & Disentanglement & Tách biệt thuộc tính (trong không gian tiềm ẩn) \\
+13 & Distortion Scheme & Lược đồ biến dạng \\
+14 & Enrollment & Pha đăng ký mẫu sinh trắc \\
+15 & Face Morphing & Lai ghép khuôn mặt \\
+16 & Feature-space & Không gian đặc trưng \\
+17 & GAN Inversion & Đảo ngược GAN (chiếu ảnh vào không gian tiềm ẩn) \\
+18 & Grid Morphing & Biến dạng lưới hình học \\
+19 & Hill-Climbing & Thuật toán leo đồi \\
+20 & Identity Preservation & Bảo toàn danh tính \\
+21 & Image Morphing & Biến dạng ảnh / Lai ghép ảnh \\
+22 & Image-space & Không gian ảnh (thô) \\
+23 & Irreversibility & Tính không thể đảo ngược \\
+24 & Key Mapping & Ánh xạ khóa \\
+25 & Latent Code & Mã tiềm ẩn \\
+26 & Latent Space & Không gian tiềm ẩn \\
+27 & Loss Function & Hàm mất mát \\
+28 & Na\"ive Mixing & Phép trộn thô / Trộn khởi tạo \\
+29 & Optimization Loop & Vòng lặp tối ưu hóa \\
+30 & Performance Preservation & Bảo toàn hiệu năng (nhận dạng) \\
+31 & Pre-trained & Tiền huấn luyện \\
+32 & Protected Face & Khuôn mặt được bảo vệ \\
+33 & Random Seed & Hạt giống ngẫu nhiên \\
+34 & Revocability & Tính khả hủy (thu hồi và cấp lại) \\
+35 & Revocable Biometrics & Sinh trắc học có thể thu hồi / hủy \\
+36 & Skip-connection & Liên kết tắt \\
+37 & Style Mixing & Hòa trộn phong cách \\
+38 & Test-time Optimization & Tối ưu hóa ở pha suy luận \\
+39 & Thin-Plate Spline & Nội suy bản mỏng \\
+40 & Undistort & Giải biến dạng ngược \\
+41 & Unlinkability & Tính không thể liên kết \\
+42 & Warping & Biến dạng hình học ảnh \\
 \end{longtable}
 \addtocounter{table}{-1}
 }
@@ -109,7 +126,7 @@
 2 & $\mathcal{K}$ & Không gian khóa có thể hủy. \\
 3 & $\mathcal{W}^+$ & Không gian tiềm ẩn trung gian phân tầng của StyleGAN2. \\
 4 & $\mathbf{x}_r,\; \mathbf{x}_p \in \mathcal{X}$ & Ảnh khuôn mặt thật đầu vào và ảnh được bảo vệ đầu ra. \\
-5 & $\mathbf{k} \in \mathcal{K}$ & Khóa bí mật dùng làm hạt giống ngẫu nhiên (\textit{random seed}). \\
+5 & $\mathbf{k} \in \mathcal{K}$ & Khóa bí mật dùng làm hạt giống ngẫu nhiên. \\
 6 & $\mathbf{z}_r,\; \mathbf{z}_f,\; \mathbf{z}_p \in \mathcal{W}^+$ & Mã tiềm ẩn của ảnh thật, mã sinh từ khóa và mã sau khi hòa trộn. \\
 7 & $\mathbf{F} : \mathcal{X} \times \mathcal{X} \rightarrow \{0, 1\}$ & Bộ so khớp khuôn mặt ($1$: cùng người $\mathbf{x}_1 \equiv \mathbf{x}_2$; $0$: khác người $\mathbf{x}_1 \not\equiv \mathbf{x}_2$). \\
 8 & $\mathbf{G} : \mathcal{X} \times \mathcal{K} \rightarrow \mathcal{X}$ & Bộ sinh khuôn mặt có thể hủy cần xây dựng ($\mathbf{x}_p = \mathbf{G}(\mathbf{x}_r, \mathbf{k})$). \\
@@ -119,6 +136,12 @@
 12 & $\mathbf{D} : \mathcal{W}^+ \rightarrow \mathcal{X}$ & Bộ sinh StyleGAN2 tiền huấn luyện giải mã mã tiềm ẩn về ảnh khuôn mặt. \\
 13 & $\mathbf{I},\; \mathbf{A}$ & Bộ trích xuất đặc trưng danh tính (ArcFace) và phi danh tính (FaRL). \\
 14 & $\mathcal{L}_{\text{anon}}, \mathcal{L}_{\text{idp}}, \mathcal{L}_{\text{attr}}$ & Các hàm mất mát ẩn danh, bảo toàn danh tính và bảo toàn thuộc tính. \\
+15 & $I(x, y),\; I'$ & Ảnh khuôn mặt gốc và ảnh mẫu sống khi xác thực. \\
+16 & $\mathbf{p}_{i,j},\; \Delta \mathbf{p}_{i,j}(\mathbf{k})$ & Tọa độ điểm nút lưới điều khiển và độ dịch chuyển theo khóa $\mathbf{k}$. \\
+17 & $\mathcal{T}_{\mathbf{k}},\; \mathcal{T}_{\mathbf{k}}^{-1}$ & Phép biến đổi tọa độ liên tục theo khóa $\mathbf{k}$ và ánh xạ ngược. \\
+18 & $I_{\mathbf{k}},\; I_{\text{key}},\; I_p$ & Ảnh sau biến dạng lưới, ảnh tham chiếu theo khóa và ảnh sau pha trộn lai ghép. \\
+19 & $\alpha \in (0, 1)$ & Hệ số pha trộn tuyến tính trong lai ghép khuôn mặt. \\
+20 & $\mathcal{E}(\cdot),\; s(\cdot, \cdot),\; \tau$ & Bộ trích xuất đặc trưng chuẩn, hàm đo độ tương đồng và ngưỡng quyết định xác thực. \\
 \end{longtable}
 \addtocounter{table}{-1}
 }
