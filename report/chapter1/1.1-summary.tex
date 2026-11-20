@@ -1,3 +1,57 @@
 \section{Tổng quan}
 \label{sec:tong-quan}
 
+\subsection{Tổng quan chương sách}
+Chương 19: \textit{Biometric System Security} trình bày bởi tác giả Andy Adler trong giáo trình \textit{Handbook of Biometrics} phân tích hệ thống các rủi ro an ninh và quyền riêng tư. Nội dung chương triển khai theo bốn nội dung chính từ Mục~19.1 đến Mục~19.6:
+\begin{itemize}\setlength{\itemsep}{2pt}\setlength{\parskip}{0pt}
+    \item \textbf{Tổng quan lỗ hổng và quyền riêng tư (Mục~19.1--19.2):} Phân loại các tấn công vào hệ thống sinh trắc học và chỉ rõ ba thách thức riêng tư cốt lõi (không bí mật, không thể thu hồi và nguy cơ sử dụng thứ cấp).
+    \item \textbf{Lỗ hổng theo mô-đun và cây tấn công (Mục~19.3):} Phân tích điểm yếu tại từng khâu trong dây chuyền nhận dạng và mô hình hóa chuỗi khai thác bằng cây tấn công (\textit{Attack Trees}).
+    \item \textbf{Tấn công tái tạo ảnh (Mục~19.4):} Chỉ ra nguy cơ khôi phục ảnh sinh trắc gốc từ mẫu lưu trữ hoặc từ điểm số so khớp trả về.
+    \item \textbf{Các lược đồ bảo vệ mẫu (Mục~19.5):} Trình bày các hướng bảo vệ mẫu gồm sinh trắc học có thể hủy, mã hóa sinh trắc học và đo lường hàm lượng thông tin sinh trắc.
+\end{itemize}
+
+Trong bảo mật sinh trắc học, nhận dạng mặt thường được sử dụng rất nhiều trong các bước xác thực của rất nhiều ứng dụng lớn bởi sự tiện lợi và khả năng chính xác. Khác với sử dụng mật khẩu, khuôn mặt thường gắn liền với một người và không thể thay thế được, vì vậy sinh trắc học có thể hủy được phát triển như là một giải pháp cho nhu cầu bảo mật.
+
+Các phương pháp sử dụng đặc trưng khuôn mặt có thể hủy được phát triển nhiều nhất. Mục tiêu chung của bài toán bảo mật xác định ``\textbf{Làm sao có thể tạo ra các mẫu/ảnh được bảo vệ mà vẫn giữ được khả năng nhận dạng trên hệ thống ?}''. Các phương pháp sử dụng đặc trưng mặt hiện nay sẽ cố gắng biến đổi khuôn mặt theo một mẫu hoặc phép biến đổi không thể tái tạo, vẫn giữ khả năng xác thực trong khi không bị lộ ảnh gốc. Có thể chia các phương pháp theo hai hướng dựa trên không gian thao tác, bao gồm (1) Không gian đặc trưng và (2) Không gian ảnh thô.
+
+Các phương pháp dù ở trong nhóm nào cũng gặp nhiều vấn đề. Nhóm thao tác trên không gian đặc trưng biến đổi trực tiếp trên đặc trưng, thường gây ra bóp méo và làm giảm khả năng nhận dạng trên những đặc điểm quan trọng. Trái ngược lại, thao tác trực tiếp trên ảnh lại tạo ra những chi tiết không tự nhiên và dễ bị các hệ thống nhận dạng hiện nay nhầm là ảnh giả mạo hoặc bất thường.
+
+\section{Kỹ thuật cốt lõi trong chương sách: Sinh trắc học có thể hủy bằng Image Morphing}
+\label{sec:ky-thuat-chuong-sach}
+
+\begingroup
+\setlength{\abovedisplayskip}{5pt plus 2pt minus 2pt}
+\setlength{\belowdisplayskip}{5pt plus 2pt minus 2pt}
+
+\subsection*{Nguyên lý và lý do thao tác trên không gian ảnh}
+Theo Mục~19.5.1 (\textit{Revocable Biometrics}, khởi phát bởi Ratha và cộng sự), vì dữ liệu sinh trắc học gắn vĩnh viễn với cá nhân (\textit{``chúng ta chỉ có 10 ngón tay''}), hệ thống không lưu đặc trưng gốc mà áp dụng một phép biến dạng $T_{\mathbf{k}}(\cdot)$ phụ thuộc khóa ứng dụng $\mathbf{k}$ lên mẫu trước khi đưa vào thuật toán trích xuất và so khớp tiêu chuẩn. Nhờ đó, bộ so khớp không cần biết dữ liệu đã biến dạng (\textit{độc lập bộ so khớp}), và các hồ sơ biến dạng ứng với những khóa khác nhau sẽ không khớp nhau.
+
+Đối với khuôn mặt, Mục~19.4.1 cho thấy biểu diễn đặc trưng không gian con tuyến tính $\mathbf{y} = \mathbf{H}\mathbf{x}$ dễ bị tái tạo ngược bằng giả nghịch đảo $\hat{\mathbf{x}} = \mathbf{H}^\dagger \mathbf{y}$; mặt khác, tập đặc trưng khuôn mặt không chuẩn hóa thống nhất giữa các hệ thống. Do đó, Mục~19.5.1 xác định hướng tiếp cận đặc thù cho khuôn mặt là biến đổi trực tiếp trên không gian ảnh thô thông qua \textbf{Image Morphing} --- khởi đầu là biến dạng lưới hình học (\textit{grid morphing}, định tâm quanh vùng mắt ở Hình~19.4a giáo trình) và các mở rộng lai ghép ảnh mặt (\textit{face morphing}) được nhắc trong bài báo.
+
+\subsection*{Các bước thực hiện và mô hình toán học của Image Morphing}
+Xét ảnh khuôn mặt gốc $I(x, y)$ xác định trên miền tọa độ ảnh 2 chiều $\Omega$ (ký hiệu gọn là $\mathbf{x}$) và khóa bí mật $\mathbf{k}$, quy trình gồm bốn bước:
+\begin{enumerate}\setlength{\itemsep}{2pt}\setlength{\parskip}{0pt}
+    \item \textbf{Căn chỉnh và dựng lưới điều khiển:} Chuẩn hóa khuôn mặt gốc $I(x, y)$ theo các mốc cố định (như tâm hai mắt) và phủ lưới điều khiển kích thước $M \times N$ gồm các nút $\mathbf{P} = \{\mathbf{p}_{i,j} = (x_{i,j}, y_{i,j})\}$.
+    \item \textbf{Sinh trường dịch chuyển theo khóa:} Từ khóa $\mathbf{k}$, tạo các vector dịch chuyển nút lưới $\Delta \mathbf{p}_{i,j}(\mathbf{k}) = (\Delta x_{i,j}, \Delta y_{i,j})$ để thu được lưới đích $\mathbf{p}'_{i,j} = \mathbf{p}_{i,j} + \Delta \mathbf{p}_{i,j}(\mathbf{k})$. Từ đó nội suy ánh xạ tọa độ liên tục $\mathcal{T}_{\mathbf{k}} : \Omega \rightarrow \Omega$ (song tuyến hoặc \textit{Thin-Plate Spline}):
+    \[
+    \mathcal{T}_{\mathbf{k}}(x, y) = \bigl(x + u_{\mathbf{k}}(x, y),\; y + v_{\mathbf{k}}(x, y)\bigr),
+    \]
+    với $(u_{\mathbf{k}}, v_{\mathbf{k}})$ là trường dịch chuyển nội suy theo hai trục tọa độ.
+    \item \textbf{Biến dạng và tái tạo ảnh bảo vệ:} Ở mô hình \textit{Grid Morphing} kinh điển trong Chương~19, ảnh biến dạng $I_{\mathbf{k}}$ được tạo bằng ánh xạ ngược và tái lấy mẫu cường độ:
+    \[
+    I_{\mathbf{k}}(x', y') = I\bigl(\mathcal{T}_{\mathbf{k}}^{-1}(x', y')\bigr).
+    \]
+    Ở hướng mở rộng \textit{Image/Face Morphing} (như OTB-Morph nêu trong bài báo), ảnh gốc $I_r$ (lưới $\mathbf{P}_r$) và ảnh tham chiếu sinh từ khóa $I_k$ (lưới $\mathbf{P}_k$) được biến dạng về lưới trung gian $\mathbf{P}_m = (1 - \alpha)\mathbf{P}_r + \alpha \mathbf{P}_k$ rồi pha trộn tuyến tính với hệ số $\alpha \in (0, 1)$:
+    \[
+    I_p(x, y) = (1 - \alpha)\, I_r^{\text{warp}}(x, y) + \alpha\, I_k^{\text{warp}}(x, y).
+    \]
+    \item \textbf{Trích xuất, xác thực và thu hồi:} Ảnh bảo vệ $\tilde{\mathbf{x}} = T_{\mathbf{k}}(\mathbf{x})$ ($I_{\mathbf{k}}$ hoặc $I_p$, với $T_{\mathbf{k}}$ ký hiệu phép biến đổi theo khóa $\mathbf{k}$) được đưa qua bộ trích xuất chuẩn $\mathcal{E}(\cdot)$ để lưu mẫu $\mathbf{y}_p = \mathcal{E}(\tilde{\mathbf{x}})$ (xóa $\mathbf{x}$ gốc). Khi xác thực mẫu sống $\mathbf{x}'$, hệ thống áp dụng lại đúng phép biến đổi $T_{\mathbf{k}}$ và dùng hàm so khớp $s(\cdot, \cdot)$ với ngưỡng $\tau$ để kiểm tra $s\bigl(\mathcal{E}(T_{\mathbf{k}}(\mathbf{x})), \mathcal{E}(T_{\mathbf{k}}(\mathbf{x}'))\bigr) \ge \tau$. Khi lộ mẫu, chuyển sang khóa mới $\mathbf{k}' \neq \mathbf{k}$ sao cho các hồ sơ khác khóa không khớp nhau:
+    \[
+    s\Bigl(\mathcal{E}\bigl(T_{\mathbf{k}}(\mathbf{x})\bigr),\; \mathcal{E}\bigl(T_{\mathbf{k}'}(\mathbf{x})\bigr)\Bigr) < \tau.
+    \]
+\end{enumerate}
+
+\subsection*{Giới hạn của kỹ thuật và cầu nối tới phương pháp hiện đại}
+Chương~19 (Mục~19.5.1) và bài báo chỉ ra hai giới hạn cố hữu của \textit{Image Morphing} trên không gian ảnh: (1) biến dạng lưới mạnh hoặc pha trộn điểm ảnh tạo ra vùng méo phi tự nhiên (\textit{artifacts}) khiến các bộ nhận dạng hiện đại không trích xuất đặc trưng chính xác được (giáo trình lưu ý Hình~19.4a mới dừng ở mức minh họa chưa vận hành thực tế); và (2) với phép biến dạng lưới khả nghịch $I_{\mathbf{k}} = I \circ \mathcal{T}_{\mathbf{k}}^{-1}$, nếu lộ khóa $\mathbf{k}$ thì kẻ tấn công có thể dễ dàng giải biến dạng ngược (\textit{undistort}) để khôi phục khuôn mặt gốc. Hai hạn chế này là cơ sở để FaceAnonyMixer chuyển sang thao tác trên không gian tiềm ẩn $\mathcal{W}^+$.
+\par
+\endgroup
