@@ -20,3 +20,16 @@ Bên cạnh các ưu điểm trên, phương pháp và phần thực nghiệm c�
     \item \textbf{Thiếu một số đánh giá định lượng:} Chưa công bố số liệu cụ thể về thời gian chạy, bộ nhớ tiêu thụ và hiệu năng trên các tác vụ phụ (nhận diện biểu cảm, ước lượng tuổi).
 \end{itemize}
 \endgroup
+
+\section{Đề xuất cải tiến và hướng ứng dụng}
+\label{sec::de-xuat-cai-tien}
+
+Từ những hạn chế đã phân tích ở mục trên, nhóm đề xuất hai hướng cải tiến kỹ thuật trực tiếp cho FaceAnonyMixer cùng một hướng mở rộng ứng dụng:
+
+\begin{itemize}\setlength{\itemsep}{3pt}\setlength{\parskip}{0pt}
+    \item \textbf{Thay vòng lặp tối ưu pha suy luận bằng mạng ánh xạ một lượt :} Điểm nghẽn lớn nhất của FaceAnonyMixer là phải chạy tối ưu lặp qua nhiều bước cho từng ảnh trên đồng thời StyleGAN2, ArcFace và FaRL. Để khắc phục, có thể huấn luyện trước một mạng ánh xạ nhẹ (chẳng hạn kiến trúc MLP điều kiện theo khóa) nhận đầu vào là cặp mã tiềm ẩn $(\mathbf{z}_r, \mathbf{z}_f)$ để dự đoán trực tiếp phần hiệu chỉnh $\Delta \mathbf{z}_p$ sao cho $\mathbf{z}_p^* = \mathbf{M}_{\text{naive}}(\mathbf{z}_r, \mathbf{z}_f) + \Delta \mathbf{z}_p$ chỉ sau một lần lan truyền xuôi, sử dụng chính tổng mất mát $\mathcal{L}_{\text{total}}$ làm hàm mục tiêu huấn luyện. Vì khóa $\mathbf{z}_f$ đóng vai trò điều kiện đầu vào chứ không gắn cứng vào trọng số mạng, giải pháp này vừa giữ được khả năng đổi khóa không cần huấn luyện lại, vừa giảm đáng kể độ trễ xuống mức gần thời gian thực.
+
+    \item \textbf{Tối ưu ẩn danh trên tập hợp đa bộ trích xuất (\textit):} Thực nghiệm cho thấy tỷ lệ ẩn danh trên mạng gọn nhẹ MobileFace ở tập CelebA-HQ giảm mạnh (Bảng~\ref{tab:anonymity_psr}), do mô hình chỉ tối ưu $\mathcal{L}_{\text{anon}}$ dựa trên một bộ trích xuất đơn lẻ là ArcFace (ResNet50) nên chưa xóa hết các đặc trưng cục bộ tần số cao mà các mạng nhẹ thường khai thác. Việc thay thế $\mathbf{I}$ trong $\mathcal{L}_{\text{anon}}$ bằng một tập hợp gồm cả kiến trúc sâu (ResNet) và kiến trúc gọn nhẹ (như MobileFaceNet) sẽ buộc quá trình tối ưu tách biệt danh tính đồng thời trên nhiều không gian đặc trưng khác nhau, nâng cao độ phủ bảo vệ hộp đen.
+
+    \item \textbf{Mở rộng ứng dụng sang ẩn danh hóa dữ liệu và luồng video:} Nhờ giữ được biểu cảm, tư thế gốc thông qua FaRL nhưng vẫn bảo toàn tính phân cụm theo danh tính, FaceAnonyMixer có thể ứng dụng trực tiếp để xây dựng các tập dữ liệu chia sẻ công khai phục vụ bài toán phân tích cảm xúc, hành vi mà không làm lộ danh tính người thật; đồng thời có thể mở rộng cho video bằng cách tối ưu $\mathbf{z}_p^*$ trên các khung hình chính rồi áp dụng đồng nhất cho các khung hình lân cận để đảm bảo tính nhất quán theo thời gian.
+\end{itemize}
