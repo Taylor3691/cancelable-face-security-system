@@ -60,7 +60,7 @@ class IDLoss(nn.Module):
         y_hat_feats = self.extract_feats(self.id_transform(y_hat))
 
         loss = sum(
-            torch.abs(y_hat_feats[i].dot(y_feats[i]) - self.id_margin)
+            torch.clamp(y_hat_feats[i].dot(y_feats[i]) - self.id_margin, min=0.0)
             for i in range(n)
         )
         return loss / n

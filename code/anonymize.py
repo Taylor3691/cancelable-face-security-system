@@ -29,6 +29,7 @@ from collections import defaultdict
 import torch
 from torch.optim.lr_scheduler import MultiStepLR
 from torch.utils import data
+from torchvision import transforms
 from tqdm import tqdm
 
 from lib import (
@@ -159,6 +160,11 @@ def main():
     augmenter     = ImageAugmenter(n_augmentations=5)
 
     # ── dataset ───────────────────────────────────────────────────────────────
+    img_transform = transforms.Compose([
+        transforms.Resize((256, 256), antialias=True),
+        transforms.ToTensor(),
+        transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5]),
+    ])
     dataset = CelebAHQ(
         root_dir=dataset_root,
         subset='test',
@@ -166,6 +172,7 @@ def main():
         inv=True,
         use_facial_identity=True,
         dataset_name=args.dataset,
+        transform=img_transform,
     )
     loader = data.DataLoader(dataset, batch_size=1, shuffle=False)
 
@@ -264,9 +271,13 @@ def main():
                 sched.step()
 
         # -- Save results --
+        saved_ids = set()
         for lc, data_ in zip(latent_codes, data_refs):
-            lc.save()
             img_id = int(osp.basename(data_[2][0]).split('.')[0])
+            if img_id in saved_ids:
+                continue  # skip augmented duplicates so original view isn't overwritten
+            saved_ids.add(img_id)
+            lc.save()
             with torch.no_grad():
                 anon_img = G(lc())
             out_path = osp.join(out_data_dir, identity_folder, f'{img_id}.jpg')
