@@ -88,8 +88,10 @@ def _pivot_tune(G, e4e, w_init, real_img, num_steps, lr, percept, device):
         gen_img = gen_out['image'] if isinstance(gen_out, dict) else gen_out
         gen_img_small  = F.interpolate(gen_img,   size=256)
         real_img_small = F.interpolate(real_img,  size=256)
-        loss = percept(gen_img_small, real_img_small).sum() + \
-               0.1 * F.mse_loss(gen_img_small, real_img_small)
+        mse_per_sample = F.mse_loss(
+            gen_img_small, real_img_small, reduction='none'
+        ).mean(dim=(1, 2, 3)).sum()
+        loss = percept(gen_img_small, real_img_small).sum() + 0.1 * mse_per_sample
         loss.backward()
         optimizer.step()
 
@@ -134,14 +136,23 @@ class PivotTuningInversion:
     def process_batch(self, batch):
         image_paths = batch[1]
 
-        aligned = []
+        pending = []
         for img_path in image_paths:
+            stem = osp.splitext(osp.basename(img_path))[0]
+            lat_path = osp.join(self.lat_dir, f'{stem}.pt')
+            if not osp.exists(lat_path):
+                pending.append((img_path, stem, lat_path))
+
+        if not pending:
+            return
+
+        aligned = []
+        for img_path, stem, _ in pending:
             aligned_np = self.face_aligner.align_face(
                 image_file=img_path,
                 alignment_errors_file=osp.join(self.out_dir, 'alignment_errors.txt'),
                 face_detection_errors_file=osp.join(self.out_dir, 'face_detection_errors.txt'),
             )
-            stem = osp.splitext(osp.basename(img_path))[0]
             cv2.imwrite(
                 osp.join(self.align_dir, f'{stem}_aligned.jpg'),
                 cv2.cvtColor(aligned_np, cv2.COLOR_RGB2BGR),
@@ -150,31 +161,27 @@ class PivotTuningInversion:
 
         aligned_batch = torch.cat(aligned).to(self.device)
 
-        # Encode
-        latents = _get_latents(self.e4e, aligned_batch)
+        # Encode + batched latent refinement
+        with torch.no_grad():
+            latents = _get_latents(self.e4e, aligned_batch)
 
-        # PTI refinement
-        for i, img_path in enumerate(image_paths):
-            stem = osp.splitext(osp.basename(img_path))[0]
-            lat_path = osp.join(self.lat_dir, f'{stem}.pt')
-            if osp.exists(lat_path):
-                continue  # already processed
+        w_opt = _pivot_tune(
+            self.G, self.e4e,
+            latents,
+            aligned_batch,
+            self.opts.num_steps,
+            self.opts.learning_rate,
+            self.percept,
+            self.device,
+        )
 
-            w_opt = _pivot_tune(
-                self.G, self.e4e,
-                latents[i:i+1],
-                aligned_batch[i:i+1],
-                self.opts.num_steps,
-                self.opts.learning_rate,
-                self.percept,
-                self.device,
-            )
-            torch.save(w_opt.squeeze(0), lat_path)
+        with torch.no_grad():
+            gen_out = self.G.synthesis(w_opt)
+            recons  = gen_out['image'] if isinstance(gen_out, dict) else gen_out
 
-            with torch.no_grad():
-                gen_out = self.G.synthesis(w_opt)
-                recon   = gen_out['image'] if isinstance(gen_out, dict) else gen_out
-            tensor2image(recon.squeeze(0).cpu(), adaptive=True).save(
+        for i, (_, stem, lat_path) in enumerate(pending):
+            torch.save(w_opt[i], lat_path)
+            tensor2image(recons[i].cpu(), adaptive=True).save(
                 osp.join(self.recon_dir, f'{stem}_recon.jpg'),
                 'JPEG', quality=90, subsampling=0, progressive=True,
             )
