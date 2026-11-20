@@ -1,0 +1,22 @@
+\section{Đánh giá ưu điểm, cải tiến và hạn chế}
+\label{sec::danh-gia-han-che}
+
+\begingroup
+\par\smallskip\noindent\textbf{1. Những điểm đạt được và cải tiến so với Grid Morphing}\par\smallskip
+So với biến đổi hình học trên không gian ảnh như \textit{grid morphing} (Chương 19 giáo trình \textit{Handbook of Biometrics}), \textbf{FaceAnonyMixer} thao tác trong không gian tiềm ẩn của mô hình sinh và đạt được bốn cải tiến chính:
+\begin{itemize}\setlength{\itemsep}{2pt}\setlength{\parskip}{0pt}
+    \item \textbf{Ảnh tự nhiên và tương thích rộng:} Sinh khuôn mặt chân thực, giữ nguyên biểu cảm và tư thế gốc thay vì bóp méo lưới điểm ảnh, giúp dùng trực tiếp trên các hệ thống nhận dạng chuẩn và API thương mại.
+    \item \textbf{Cân bằng bảo mật và độ chính xác:} Giải quyết thế đánh đổi của \textit{grid morphing} (biến dạng mạnh làm hỏng nhận diện, biến dạng nhẹ dễ lộ danh tính), vừa ẩn danh hiệu quả vừa duy trì khả năng xác thực tương đương ảnh gốc.
+    \item \textbf{Kháng đảo ngược khi lộ khóa:} Khắc phục điểm yếu dễ bị giải biến dạng của kỹ thuật cổ điển nhờ loại bỏ thông tin định danh gốc và biến đổi phi tuyến trong không gian tiềm ẩn.
+    \item \textbf{Đáp ứng ISO/IEC 24745 và linh hoạt đổi khóa:} Tạo danh tính giả tách biệt cho từng khóa để chống đối chiếu chéo, đồng thời không cần huấn luyện lại mô hình khi cấp khóa mới như một số phương pháp học sâu trước đây.
+\end{itemize}
+
+\par\medskip\noindent\textbf{2. Hạn chế của phương pháp và bài báo}\par\smallskip
+Bên cạnh các ưu điểm trên, phương pháp và phần thực nghiệm của bài báo vẫn còn một số hạn chế:
+\begin{itemize}\setlength{\itemsep}{2pt}\setlength{\parskip}{0pt}
+    \item \textbf{Chi phí tính toán cao khi suy luận:} Cơ chế tối ưu lặp cho từng ảnh đầu vào gây độ trễ lớn, khó triển khai thời gian thực hoặc trên thiết bị tài nguyên hạn chế.
+    \item \textbf{Phụ thuộc vào mô hình nền:} Chất lượng tái tạo phụ thuộc bộ mã hóa đảo ngược và miền ảnh chân dung chuẩn của mô hình sinh, dễ suy giảm khi gặp che khuất nặng hoặc góc nghiêng lớn.
+    \item \textbf{Bảo vệ chưa đồng đều giữa các bộ nhận dạng:} Hiệu quả che giấu danh tính vẫn giảm đáng kể trước một số kiến trúc nhận dạng gọn nhẹ nhưng bài báo chưa phân tích rõ nguyên nhân.
+    \item \textbf{Thiếu một số đánh giá định lượng:} Chưa công bố số liệu cụ thể về thời gian chạy, bộ nhớ tiêu thụ và hiệu năng trên các tác vụ phụ (nhận diện biểu cảm, ước lượng tuổi).
+\end{itemize}
+\endgroup

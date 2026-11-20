@@ -92,47 +92,10 @@ CanFG & 0.045 & 0.988 & 0.101 & 0.951 \\
 \end{minipage}
 \end{table}
 
-\begin{table}[H]
-\centering
-\scriptsize
-\setlength{\tabcolsep}{2pt}
-\begin{minipage}[t]{0.57\textwidth}
-\centering
-\caption{PSR (\%) chống tấn công đảo ngược ngay cả khi lộ khóa ($\uparrow$ tốt hơn). Nguồn: Bảng 4, bài báo gốc.}
-\label{tab:noninvertibility}
-\begin{tabular}{|l|c|cccc|}
-\hline
-\textbf{Bộ dữ liệu} & \textbf{FMR} & IRSE50 & IR152 & FaceNet & MobileFace \\
-\hline
-\multirow{3}{*}{CelebA-HQ} & 0.1\% & 98.02 & 98.77 & 99.26 & 96.79 \\
- & 0.01\% & 94.57 & 97.53 & 96.79 & 88.97 \\
- & 0.001\% & 87.74 & 92.02 & 93.50 & 74.24 \\
-\hline
-\multirow{3}{*}{VGGFace2} & 0.1\% & 97.60 & 98.40 & 99.15 & 93.80 \\
- & 0.01\% & 94.18 & 97.01 & 95.12 & 86.57 \\
- & 0.001\% & 91.35 & 95.27 & 93.8 & 75.98 \\
-\hline
-\end{tabular}
-\end{minipage}
-\hfill
-\begin{minipage}[t]{0.40\textwidth}
-\centering
-\caption{PSR (\%) theo 5 khóa ngẫu nhiên trên IR152 ($\uparrow$ tốt hơn). Nguồn: Bảng 6, bài báo gốc.}
-\label{tab:key_robustness}
-\begin{tabular}{|c|ccccc|c|}
-\hline
- & $k_1$ & $k_2$ & $k_3$ & $k_4$ & $k_5$ & \textbf{Std.} \\
-\hline
-PSR & 95.47 & 90.47 & 91.91 & 96.84 & 92.87 & 2.33 \\
-\hline
-\end{tabular}
-\end{minipage}
-\end{table}
-
-Các bảng kết quả còn lại củng cố tính toàn diện của phương pháp thông qua bốn thực nghiệm:
+Các kết quả bổ trợ dưới đây củng cố tính toàn diện của phương pháp:
 \begin{itemize}
     \item \textbf{Kiểm tra tính ứng dụng bằng API nhận dạng đời thực (Bảng~\ref{tab:facepp}):} Điểm tin cậy tương đồng trên Face++ giảm từ $71.07$ (CanFG) xuống $58.37$ (riêng VGGFace2 giảm sâu từ $70.78$ còn $31.51$), chứng tỏ việc tối ưu trong $\mathcal{W}^+$ đánh lừa hiệu quả ngay cả các hệ thống thương mại không rõ kiến trúc.
-    \item \textbf{Chống đảo ngược ngay cả khi lộ khóa (Bảng~\ref{tab:noninvertibility}):} Ngay cả khi kẻ tấn công biết cả khóa $\mathbf{k}$ lẫn ảnh bảo vệ để thay lại tầng giữa hoặc huấn luyện mạng dịch ảnh ngược \textit{pix2pix}, tỷ lệ ảnh tái tạo không bị nhận ra là người gốc vẫn đạt $93.80\%\text{--}99.26\%$ tại ngưỡng chỉ cho phép nhận nhầm người lạ $0.1\%$. Lý do là phần mã định danh gốc $\mathbf{z}_r^{(3:7)}$ đã bị loại bỏ hoàn toàn trước khi tối ưu phi tuyến qua 50 bước lặp, khiến ánh xạ ngược trở nên bất khả thi.
+    \item \textbf{Chống đảo ngược ngay cả khi lộ khóa (Bảng~\ref{tab:noninvertibility}, Phụ lục~\ref{app:extra_tables}):} Ngay cả khi kẻ tấn công biết cả khóa $\mathbf{k}$ lẫn ảnh bảo vệ để thay lại tầng giữa hoặc huấn luyện mạng dịch ảnh ngược \textit{pix2pix}, tỷ lệ ảnh tái tạo không bị nhận ra là người gốc vẫn đạt $93.80\%\text{--}99.26\%$ tại ngưỡng chỉ cho phép nhận nhầm người lạ $0.1\%$. Lý do là phần mã định danh gốc $\mathbf{z}_r^{(3:7)}$ đã bị loại bỏ hoàn toàn trước khi tối ưu phi tuyến qua 50 bước lặp, khiến ánh xạ ngược trở nên bất khả thi.
     \item \textbf{Bảo toàn nhận dạng và chất lượng ảnh (Bảng~\ref{tab:utility}):} CanFG làm suy giảm khả năng xác thực so với ảnh gốc (EER trên CelebA-HQ tăng từ $0.027 \rightarrow 0.045$; trên VGGFace2 tăng từ $0.074 \rightarrow 0.101$) vì tối ưu đối nghịch trên U-Net không có ràng buộc giữ biểu cảm, hướng nhìn gây méo đặc trưng (FID $= 82.52$). Ngược lại, FaceAnonyMixer giảm EER xuống \textbf{0.019} (CelebA-HQ) và \textbf{0.059} (VGGFace2) --- thậm chí tốt hơn cả ảnh gốc chưa bảo vệ --- nhờ $\mathcal{L}_{\text{idp}}$ gom chặt các ảnh bảo vệ cùng người dưới cùng khóa trong không gian ArcFace, trong khi $\mathcal{L}_{\text{attr}}$ (FaRL) và bộ sinh StyleGAN2 giữ biểu cảm tự nhiên với FID chỉ còn \textbf{37.73}.
-    \item \textbf{Ổn định trước biến thiên khóa (Bảng~\ref{tab:key_robustness}):} Qua $5$ khóa ngẫu nhiên khác nhau, tỷ lệ bảo vệ thành công trên IR152 duy trì trung bình $93.51\%$ với độ lệch chuẩn rất nhỏ ($\text{Std.} = 2.33$), khẳng định hiệu quả bảo vệ không phụ thuộc vào việc chọn khóa đặc biệt.
+    \item \textbf{Ổn định trước biến thiên khóa (Bảng~\ref{tab:key_robustness}, Phụ lục~\ref{app:extra_tables}):} Qua $5$ khóa ngẫu nhiên khác nhau, tỷ lệ bảo vệ thành công trên IR152 duy trì trung bình $93.51\%$ với độ lệch chuẩn rất nhỏ ($\text{Std.} = 2.33$), khẳng định hiệu quả bảo vệ không phụ thuộc vào việc chọn khóa đặc biệt.
 \end{itemize}

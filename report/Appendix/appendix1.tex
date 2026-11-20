@@ -1,0 +1,40 @@
+\chapter{Số liệu thực nghiệm bổ sung}
+\label{app:extra_tables}
+
+Phụ lục này trình bày chi tiết hai bảng số liệu thực nghiệm bổ trợ của phương pháp FaceAnonyMixer được trích từ bài báo gốc, bao gồm khả năng chống tấn công đảo ngược khi lộ khóa (Bảng~\ref{tab:noninvertibility}) và độ ổn định qua các khóa ngẫu nhiên (Bảng~\ref{tab:key_robustness}).
+
+\begin{table}[H]
+\centering
+\small
+\setlength{\tabcolsep}{6pt}
+\caption{Tỷ lệ bảo vệ thành công PSR (\%) chống tấn công đảo ngược ngay cả khi lộ khóa ($\uparrow$ tốt hơn). Nguồn: Bảng 4, bài báo gốc FaceAnonyMixer.}
+\label{tab:noninvertibility}
+\begin{tabular}{|l|c|cccc|}
+\hline
+\textbf{Bộ dữ liệu} & \textbf{FMR} & IRSE50 & IR152 & FaceNet & MobileFace \\
+\hline
+\multirow{3}{*}{CelebA-HQ} & 0.1\% & 98.02 & 98.77 & 99.26 & 96.79 \\
+ & 0.01\% & 94.57 & 97.53 & 96.79 & 88.97 \\
+ & 0.001\% & 87.74 & 92.02 & 93.50 & 74.24 \\
+\hline
+\multirow{3}{*}{VGGFace2} & 0.1\% & 97.60 & 98.40 & 99.15 & 93.80 \\
+ & 0.01\% & 94.18 & 97.01 & 95.12 & 86.57 \\
+ & 0.001\% & 91.35 & 95.27 & 93.8 & 75.98 \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\small
+\setlength{\tabcolsep}{6pt}
+\caption{Tỷ lệ bảo vệ thành công PSR (\%) theo 5 khóa ngẫu nhiên trên IR152 ($\uparrow$ tốt hơn). Nguồn: Bảng 6, bài báo gốc FaceAnonyMixer.}
+\label{tab:key_robustness}
+\begin{tabular}{|c|ccccc|c|}
+\hline
+ & $k_1$ & $k_2$ & $k_3$ & $k_4$ & $k_5$ & \textbf{Std.} \\
+\hline
+PSR & 95.47 & 90.47 & 91.91 & 96.84 & 92.87 & 2.33 \\
+\hline
+\end{tabular}
+\end{table}
