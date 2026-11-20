@@ -49,9 +49,9 @@ class VGGFace2(data.Dataset):
             transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5]),
         ])
 
-        # Inversion paths
-        self.inv_data_dir  = osp.join('datasets', 'inv_pivot', 'vggface2', 'data')
-        self.inv_codes_dir = osp.join('datasets', 'inv_pivot', 'vggface2', 'latent_codes')
+        # Inversion paths (matches invert.py output: reconstructed/ and latents/)
+        self.inv_data_dir  = osp.join('datasets', 'inv_pivot', 'vggface2', 'reconstructed')
+        self.inv_codes_dir = osp.join('datasets', 'inv_pivot', 'vggface2', 'latents')
 
         # NN map
         self.fake_dataset_root = None
@@ -93,14 +93,17 @@ class VGGFace2(data.Dataset):
         # ── Fake NN ──────────────────────────────────────────────────────────
         img_nn      = torch.zeros_like(img_orig)
         img_nn_code = torch.zeros(18, 512)
-        if self.fake_nn_map and img_basename in self.nn_map_dict:
-            nn_key       = self.nn_map_dict[img_basename]
-            nn_img_path  = osp.join(self.fake_dataset_root, nn_key, 'image.jpg')
-            nn_code_path = osp.join(self.fake_dataset_root, nn_key, 'latent_code_w+.pt')
-            if osp.isfile(nn_img_path):
-                img_nn = self.transform(Image.open(nn_img_path).convert('RGB'))
-            if osp.isfile(nn_code_path):
-                img_nn_code = torch.load(nn_code_path).squeeze(0)
+        if self.fake_nn_map:
+            rel_key = osp.join(identity_folder, img_basename)
+            nn_key = self.nn_map_dict.get(rel_key) or self.nn_map_dict.get(img_basename)
+            if nn_key:
+                fake_dir = osp.dirname(nn_key) if nn_key.endswith(('.jpg', '.jpeg', '.png')) else nn_key
+                nn_img_path  = osp.join(self.fake_dataset_root, fake_dir, 'image.jpg')
+                nn_code_path = osp.join(self.fake_dataset_root, fake_dir, 'latent_code_w+.pt')
+                if osp.isfile(nn_img_path):
+                    img_nn = self.transform(Image.open(nn_img_path).convert('RGB'))
+                if osp.isfile(nn_code_path):
+                    img_nn_code = torch.load(nn_code_path).squeeze(0)
 
         # ── Inversion ────────────────────────────────────────────────────────
         img_recon      = torch.zeros_like(img_orig)
