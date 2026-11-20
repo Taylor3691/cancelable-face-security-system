@@ -84,6 +84,50 @@ Cuối cùng, ảnh khuôn mặt được bảo vệ hoàn chỉnh thu được 
 
 \pagebreak
 
-\section{Thuật toán}
-\label{sec::thuat-toan}
+\section{Các công đoạn chính}
+\label{sec::cac-cong-doan-chinh}
+
+\begingroup
+\setlength{\abovedisplayskip}{6pt plus 2pt minus 2pt}
+\setlength{\belowdisplayskip}{6pt plus 2pt minus 2pt}
+\setlength{\jot}{3pt}
+Quy trình tạo ảnh khuôn mặt được bảo vệ của FaceAnonyMixer hoạt động ở pha suy luận (giữ cố định trọng số của bộ mã hóa $\mathbf{E}$, bộ sinh $\mathbf{D}$, bộ trích xuất đặc trưng danh tính ArcFace $\mathbf{I}$ và bộ trích xuất đặc trưng phi danh tính FaRL $\mathbf{A}$) và gồm sáu công đoạn chính sau:
+
+\par\medskip\noindent\textbf{Bước 1: Đưa ảnh vào không gian tiềm ẩn }\par\smallskip
+Ảnh khuôn mặt thật $\mathbf{x}_r$ được đưa qua bộ mã hóa e4e để thu được mã tiềm ẩn $\mathbf{z}_r \leftarrow \mathbf{E}(\mathbf{x}_r) \in \mathcal{W}^+$ gồm 18 tầng ngữ nghĩa, trong đó các tầng $0\text{--}2$ kiểm soát cấu trúc thô (tư thế, hình dáng mặt), các tầng $3\text{--}7$ biểu diễn đặc trưng định danh và các tầng $8\text{--}17$ lưu giữ chi tiết mịn (kiểu tóc, phông nền).
+
+\par\medskip\noindent\textbf{Bước 2: Ánh xạ khóa}\par\smallskip
+Sử dụng khóa có thể hủy $\mathbf{k} \in \mathcal{K}$ làm hạt giống ngẫu nhiên để lấy mẫu một mã tiềm ẩn giả lập từ không gian $\mathcal{W}^+$:
+\[
+\mathbf{z}_f \leftarrow \mathbf{S}(\mathbf{k}).
+\]
+
+\par\medskip\noindent\textbf{Bước 3: Khởi tạo bằng phép trộn \textit{Na\"ive Mixing}}\par\smallskip
+Thay thế trực tiếp các tầng mang thông tin danh tính ($3\text{--}7$) của $\mathbf{z}_r$ bằng các tầng tương ứng của $\mathbf{z}_f$, đồng thời giữ nguyên các tầng cấu trúc thô và chi tiết nền:
+\begin{equation}
+\mathbf{z}_p = \mathbf{M}_{\text{naive}}(\mathbf{z}_r, \mathbf{z}_f) = \bigl[\mathbf{z}_r^{(0:2)},\; \mathbf{z}_f^{(3:7)},\; \mathbf{z}_r^{(8:17)}\bigr].
+\end{equation}
+
+\par\medskip\noindent\textbf{Bước 4: Tăng cường khả năng nhận dạng}\par\smallskip
+Tạo $N$ biến thể tăng cường $\mathbf{x}_r^1, \dots, \mathbf{x}_r^N$ từ $\mathbf{x}_r$ với các tư thế và biểu cảm khác nhau (hoặc sử dụng trực tiếp nhiều ảnh khác nhau của cùng một người nếu có sẵn), sau đó mã hóa $\mathbf{z}_r^i \leftarrow \mathbf{E}(\mathbf{x}_r^i)$ và khởi tạo trộn thô với cùng mã khóa:
+\[
+\mathbf{z}_p^i \leftarrow \mathbf{M}_{\text{naive}}(\mathbf{z}_r^i, \mathbf{z}_f), \quad i \in \{1, \dots, N\}.
+\]
+
+\par\medskip\noindent\textbf{Bước 5: Vòng lặp tối ưu ba hàm mất mát}\par\smallskip
+Do sự tách biệt thuộc tính trong $\mathcal{W}^+$ chưa hoàn hảo tuyệt đối, hệ thống tinh chỉnh các mã tiềm ẩn qua $T$ bước lặp ($t = 1, \dots, T$). Tại mỗi bước lặp, trước hết giải mã các ảnh bảo vệ tạm thời từ các mã tiềm ẩn hiện tại: $\mathbf{x}_p \leftarrow \mathbf{D}(\mathbf{z}_p)$ và $\mathbf{x}_p^i \leftarrow \mathbf{D}(\mathbf{z}_p^i)$. Tiếp theo, tính ba thành phần hàm mất mát:
+\begin{align}
+\mathcal{L}_{\text{anon}} &= \max\Bigl\{0,\; \cos\bigl(\mathbf{I}(\mathbf{x}_p), \mathbf{I}(\mathbf{x}_r)\bigr) - m\Bigr\}, \\
+\mathcal{L}_{\text{idp}} &= \frac{1}{N(N-1)} \sum_{i=1}^{N} \sum_{j=i+1}^{N} \bigl\| \mathbf{I}(\mathbf{x}_p^i) - \mathbf{I}(\mathbf{x}_p^j) \bigr\|_2, \\
+\mathcal{L}_{\text{attr}} &= \bigl\| \mathbf{A}(\mathbf{x}_p) - \mathbf{A}(\mathbf{x}_r) \bigr\|_1,
+\end{align}
+trong đó $m$ là siêu tham số lề (đặt $m = 0$ để ép $\mathbf{x}_p$ tiến tới trực giao với $\mathbf{x}_r$ trong không gian danh tính), $\mathcal{L}_{\text{idp}}$ buộc các biến thể cùng người dưới cùng khóa hội tụ gần nhau, còn $\mathcal{L}_{\text{attr}}$ giữ lại các thuộc tính phi danh tính của ảnh gốc. Cuối cùng, tổng mất mát được xác định theo $\mathcal{L}_{\text{total}} = \lambda_1 \mathcal{L}_{\text{anon}} + \lambda_2 \mathcal{L}_{\text{idp}} + \lambda_3 \mathcal{L}_{\text{attr}}$, và các mã tiềm ẩn được cập nhật bằng hạ gradient với tốc độ học $\eta$:
+\[
+\mathbf{z}_p \leftarrow \mathbf{z}_p - \eta \nabla_{\mathbf{z}_p} \mathcal{L}_{\text{total}}, \qquad \mathbf{z}_p^i \leftarrow \mathbf{z}_p^i - \eta \nabla_{\mathbf{z}_p^i} \mathcal{L}_{\text{total}}.
+\]
+
+\par\medskip\noindent\textbf{Bước 6: Tạo ra ảnh đầu ra}\par\smallskip
+Kết thúc $T$ bước tối ưu, mã tiềm ẩn tối ưu $\mathbf{z}_p$ được đưa qua bộ sinh StyleGAN2 để tạo ra ảnh khuôn mặt bảo vệ hoàn chỉnh $\mathbf{x}_p = \mathbf{D}(\mathbf{z}_p)$.
+\par
+\endgroup
 
