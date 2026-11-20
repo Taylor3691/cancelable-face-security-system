@@ -1,0 +1,298 @@
+% !TeX program = xelatex
+% Self-contained: bibliography and vector figures are included in this file.
+\documentclass[11pt,a4paper]{article}
+\usepackage[margin=22mm,headheight=15pt]{geometry}
+\usepackage{fontspec}
+\IfFontExistsTF{Times New Roman}{\setmainfont{Times New Roman}}{\setmainfont{TeX Gyre Termes}}
+\IfFontExistsTF{Arial}{\setsansfont{Arial}}{\setsansfont{TeX Gyre Heros}}
+\usepackage{amsmath,amssymb,mathtools}
+\usepackage{booktabs,tabularx,array}
+\usepackage{enumitem}
+\usepackage{xcolor,tikz}
+\usetikzlibrary{arrows.meta,positioning,calc}
+\usepackage{fancyhdr}
+\usepackage[unicode,colorlinks=true,linkcolor=teal!65!black,citecolor=teal!65!black,urlcolor=teal!65!black]{hyperref}
+\hypersetup{pdftitle={Grid Morphing trong bảo vệ mẫu sinh trắc học khuôn mặt},pdfauthor={Tất Toàn}}
+\renewcommand{\figurename}{Hình}
+\renewcommand{\tablename}{Bảng}
+\renewcommand{\refname}{Tài liệu tham khảo}
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{\small Grid Morphing và cancelable face}
+\rhead{\small Tất Toàn}
+\cfoot{\thepage}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{5pt}
+\setlength{\emergencystretch}{2em}
+\setlist{nosep,leftmargin=*,topsep=3pt}
+\renewcommand{\arraystretch}{1.15}
+\setlength{\intextsep}{7pt}
+\setlength{\textfloatsep}{9pt}
+\setlength{\abovecaptionskip}{5pt}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\Tpl}{\mathcal{T}}
+\newcommand{\Score}{\operatorname{sim}}
+\newcommand{\Interp}{\operatorname{Interp}}
+\newcommand{\Accept}{\operatorname{Accept}}
+\newcommand{\note}[1]{\par\begingroup\small\color{teal!65!black}\leftskip=1em\rightskip=1em\noindent#1\par\endgroup}
+
+\begin{document}
+\begin{center}
+{\Large\bfseries Grid Morphing trong bảo vệ mẫu\\[2pt] sinh trắc học khuôn mặt}\par
+{\normalsize Báo cáo seminar --- Tất Toàn}
+\end{center}
+\vspace{-5pt}
+
+\section{Tổng quan chương sách và vị trí kỹ thuật}
+\textbf{Nguồn và phạm vi.} Chương 19, \textit{Biometric System Security}, do Andy Adler viết, nằm ở trang 381--402 của \textit{Handbook of Biometrics}, do A.~K.~Jain, P.~Flynn và A.~A.~Ross biên tập, Springer, 2008 \cite{adler}. Chương nghiên cứu an ninh của quá trình xử lý và lưu trữ sinh trắc học; có liên hệ với giả mạo ở đầu vào nhưng không tập trung vào kỹ thuật tạo mẫu giả.
+
+\textbf{Vấn đề cốt lõi.} Nhận dạng chính xác trong điều kiện bình thường chưa đủ bảo đảm an ninh khi có kẻ tấn công. Một hệ thống có thể bị sửa mẫu đăng ký, thay đặc trưng, khai thác điểm đối sánh hoặc can thiệp quyết định cuối cùng. Mặt khác, đặc trưng sinh trắc học có thể bị thu thập mà chủ thể không biết, khó thay thế khi lộ và có thể bị dùng để liên kết dữ liệu giữa các dịch vụ. Vì vậy, chương nối \emph{phân tích điểm yếu của hệ thống} với \emph{bảo vệ mẫu và quyền riêng tư}.
+
+\begin{tabularx}{\linewidth}{@{}p{.21\linewidth}Y@{}}
+\toprule
+Phần của chương & Nội dung và vai trò trong lập luận \\
+\midrule
+19.1--19.2 & Đặt khái niệm an ninh, biến thiên của mẫu và các nguy cơ đối với hệ thống lẫn người dùng. \\
+19.3 & Phân tích các khâu từ khai báo danh tính, thu nhận, xử lý, lưu trữ đến đối sánh và quyết định; dùng cây tấn công để tổ chức các kịch bản. \\
+19.4 & Chỉ ra nguy cơ tái tạo ảnh từ mẫu hoặc từ điểm đối sánh. Do đó, chỉ bỏ ảnh gốc và lưu đặc trưng chưa đủ bảo vệ danh tính. \\
+19.5--19.6 & Giới thiệu mẫu có thể thu hồi, biometric encryption và cách đo lượng thông tin sinh trắc học; thảo luận lợi ích cùng các giới hạn an ninh. \\
+\bottomrule
+\end{tabularx}
+
+\textbf{Các hướng giải quyết.} \emph{Revocable biometrics} thay đổi biểu diễn bằng phép biến đổi có tham số để có thể cấp lại mẫu. \emph{Biometric encryption} gắn mẫu với bí mật hoặc hỗ trợ khôi phục khóa khi mẫu mới đủ gần mẫu đăng ký; chương đề cập bộ lọc tương quan, mã sửa sai, fuzzy vault và secure sketch. \emph{Đo lượng thông tin sinh trắc học} giúp đánh giá khả năng phân biệt và thông tin có thể bị lộ. Các hướng này phục vụ những chức năng khác nhau, nên cần phân tích theo mô hình tấn công cụ thể.
+
+\textbf{Vị trí Grid Morphing.} Kỹ thuật được chọn thuộc mục \textbf{19.5.1 Revocable Biometrics}, bắt đầu ở trang \textbf{393}. Tài liệu [33] trong chương là công trình của Ratha, Connell và Bolle năm 2001 \cite{ratha}. Với khuôn mặt, phép biến đổi tác động lên ảnh trước khi trích đặc trưng; Hình 19.4(a), trang 394, minh họa ảnh bị biến dạng. Chuỗi lập luận của báo cáo là:
+\begin{center}
+\small Mẫu khó thay thế khi lộ $\longrightarrow$ thay biểu diễn bằng tham số\\
+$\longrightarrow$ đối sánh trong cùng biểu diễn $\longrightarrow$ kiểm tra an ninh và độ chính xác.
+\end{center}
+\textbf{Giới hạn cần giữ.} Adler lưu ý ví dụ khuôn mặt này chưa thuộc một hệ thống được triển khai và độ mạnh an ninh của các phép biến dạng cần được phân tích thêm \cite[tr.~394--395]{adler}. Đây là căn cứ để đánh giá phương pháp có điều kiện.
+
+\newpage
+\section{Bài toán cancelable face và các tiêu chí đánh giá}
+\subsection{Vì sao cần thay biểu diễn khuôn mặt?}
+Nếu dịch vụ lưu cùng một mẫu khuôn mặt cho nhiều ứng dụng, sự cố lộ dữ liệu có thể vừa hỗ trợ mạo danh vừa cho phép liên kết hồ sơ. Đổi mật khẩu không thay được khuôn mặt của người dùng. Vì thế, thay vì coi ảnh hoặc đặc trưng gốc là định danh lâu dài, ta muốn tạo mẫu phụ thuộc dịch vụ và phiên bản: khi một mẫu bị lộ, dịch vụ vô hiệu hóa mẫu đó rồi cấp mẫu mới từ cùng đặc điểm sinh trắc học \cite[tr.~383, 393--395]{adler}.
+
+\subsection{Liên hệ ISO/IEC 24745}
+ISO/IEC 24745 là \emph{một tiêu chuẩn} bảo vệ thông tin sinh trắc học. Báo cáo dùng bốn tiêu chí theo đề bài; ba thuộc tính an ninh và riêng tư dưới đây được đối chiếu với thuật ngữ của ISO/IEC 24745:2022. Bảo toàn hiệu năng được xem thêm như yêu cầu sử dụng thực tế; ISO/IEC 30136:2018 hướng dẫn đánh giá các sơ đồ bảo vệ mẫu \cite{iso2022,iso30136}.
+
+\begin{tabularx}{\linewidth}{@{}p{.27\linewidth}Y@{}}
+\toprule
+Tiêu chí & Ý nghĩa trong bài toán này \\
+\midrule
+\textbf{Revocability}\newline Khả năng thu hồi & Ngăn xác thực thành công bằng bản tham chiếu đã bị thu hồi. \emph{Renewability} bổ sung khả năng tạo nhiều bản không liên kết từ cùng dữ liệu để tiếp tục nhận dạng mà không lộ bản gốc. \\
+\textbf{Unlinkability}\newline Không thể liên kết & Không thể liên kết các bản tham chiếu với nhau hoặc với chủ thể nguồn. Hai mẫu trông khác nhau chưa đủ chứng minh thuộc tính này. \\
+\textbf{Irreversibility}\newline Không thể đảo ngược & Mẫu đã biến đổi không được cung cấp thông tin cho phép suy ra dữ liệu sinh trắc học nguồn. Trong đánh giá tấn công, cần xét cả khôi phục đủ để mạo danh, không chỉ khôi phục đúng từng pixel. \\
+\textbf{Performance preservation}\newline Bảo toàn hiệu năng & Mức chính xác nhận dạng vẫn chấp nhận được sau bảo vệ. Cần so sánh sai số trước và sau biến đổi, đồng thời tính trường hợp không trích được đặc trưng. \\
+\bottomrule
+\end{tabularx}
+
+Các định nghĩa được diễn giải, không chép nguyên văn tiêu chuẩn. ISO/IEC 24745:2022 định nghĩa irreversibility ở mục 3.26, renewability ở 3.33, revocability ở 3.35 và unlinkability ở 3.38 \cite{isopreview}. Công trình Ratha xuất bản năm 2001; phiên bản đầu ISO/IEC 24745 ra năm 2011 \cite{iso2011}. Vì vậy, đây là \emph{đối chiếu hồi cứu}, không phải tuyên bố tác giả đã chứng nhận tuân thủ ISO.
+
+\subsection{Mô hình đánh giá}
+Giả sử đối thủ lấy được mẫu đã bảo vệ; xét thêm trường hợp biết tham số biến dạng hoặc có nhiều bản của cùng người. Mục tiêu đánh giá gồm: tái tạo dữ liệu nguồn, liên kết hai dịch vụ và dùng mẫu cũ sau thu hồi. Việc đặt tham số ở nơi riêng có thể hỗ trợ phòng vệ, nhưng không thay thế phân tích khi tham số bị lộ.
+
+\begin{figure}[!ht]
+\centering
+\begin{tikzpicture}[>=Latex,node distance=5mm,
+box/.style={draw=teal!65!black,rounded corners,fill=teal!5,minimum height=9mm,align=center,font=\small}]
+\node[box] (a) {Ảnh mới $I$};
+\node[box,right=of a] (b) {Căn chỉnh $A$};
+\node[box,right=of b] (c) {Biến dạng $T_{\theta_k}$};
+\node[box,right=of c] (d) {Đặc trưng $f$};
+\node[box,right=of d] (e) {Đối sánh $\Score$};
+\draw[->] (a)--(b);\draw[->] (b)--(c);\draw[->] (c)--(d);\draw[->] (d)--(e);
+\node[below=5mm of c,font=\small] (key) {Cùng $\theta_k$ cho đăng ký và xác thực};
+\draw[->] (key)--(c);
+\end{tikzpicture}
+\caption{Luồng xử lý được hình thức hóa cho báo cáo. Mẫu lưu trữ là đầu ra của $f$ sau biến dạng.}
+\end{figure}
+
+\newpage
+\section{Ý tưởng Grid Morphing và phát biểu toán học}
+\textbf{Ý tưởng từ bài gốc.} Ratha và cộng sự minh họa một lưới đặt theo đặc điểm khuôn mặt rồi làm biến dạng lưới để thay hình học ảnh; phép biến đổi phải lặp lại được giữa các lần thu nhận \cite[tr.~629--630, Hình~10]{ratha}. Khác với trộn hai khuôn mặt, ở đây mục đích là đổi biểu diễn của \emph{một} khuôn mặt theo tham số.
+
+\note{Bài gốc không cho công thức nội suy, kích thước lưới hoặc giả mã riêng cho Grid Morphing. Công thức (14)--(17) của bài gốc thuộc phép biến đổi điểm trong miền đặc trưng. Các công thức lưới dưới đây là cách hình thức hóa của người viết để trình bày quy trình, không được gán là công thức nguyên bản của Ratha.}
+
+\subsection{Ký hiệu và bài toán xác thực}
+\begin{tabularx}{\linewidth}{@{}p{.22\linewidth}Y@{}}
+\toprule
+Ký hiệu & Định nghĩa \\
+\midrule
+$I,\ J=A(I)$ & Ảnh đầu vào và ảnh đã căn chỉnh trên miền chuẩn $\Omega=[0,1]^2$. \\
+$u,\ d,\ v,\ k=(d,v)$ & Người dùng, dịch vụ, phiên bản mẫu và chỉ mục chọn cấu hình biến dạng. \\
+$P_{ij},Q_{ij}^{k}$ & Nút lưới gốc và nút lưới đích, $0\leq i\leq m$, $0\leq j\leq n$. \\
+$\theta_k,\ W_{\theta_k}$ & Tập tham số nút đích và ánh xạ tọa độ từ lưới gốc sang lưới đích. \\
+$T_{\theta_k}, f$ & Toán tử biến dạng ảnh và bộ trích đặc trưng cố định. \\
+$t_{u,k},\ \tau_k$ & Mẫu bảo vệ của người $u$ và ngưỡng chấp nhận đã hiệu chỉnh. \\
+\bottomrule
+\end{tabularx}
+Với $I_u^e$ là ảnh đăng ký và $I^q$ là ảnh truy vấn, đặt
+\begin{equation}\label{eq:template}
+ \Tpl_k(I)=f\!\left(T_{\theta_k}(A(I))\right),\qquad
+ t_{u,k}=\Tpl_k(I_u^e).
+\end{equation}
+Với quy ước điểm tương đồng càng lớn càng giống, quyết định xác thực là
+\begin{equation}\label{eq:decision}
+ \Accept(u,k,I^q)=
+ \mathbf{1}\{\mathrm{active}(u,k)=1\}\,
+ \mathbf{1}\{\Score(t_{u,k},\Tpl_k(I^q))\geq\tau_k\}.
+\end{equation}
+$\mathbf{1}\{\cdot\}$ là hàm chỉ thị. Trạng thái $\mathrm{active}$ bảo đảm mẫu đã thu hồi không tiếp tục được chấp nhận.
+
+\subsection{Ánh xạ một ô lưới}
+Chọn $m,n\in\mathbb{N}_{>0}$, $P_{ij}=(i/m,j/n)$ và $Q_{ij}^k=P_{ij}+\delta_{ij}^k$, với $\delta_{ij}^k\in\R^2$ là dịch chuyển cố định của nút. Với $p=(x,y)$ trong ô $(i,j)$, $0\leq i<m$, $0\leq j<n$, đặt $\alpha=mx-i$, $\beta=ny-j$; điểm ở biên ngoài dùng ô kề trong. Một mô hình nội suy song tuyến tính là
+\begin{equation}\label{eq:warp}
+ W_{\theta_k}(p)=\sum_{a,b\in\{0,1\}}w_{ab}(\alpha,\beta)Q_{i+a,j+b}^{k},
+\end{equation}
+trong đó $w_{00}=(1-\alpha)(1-\beta)$, $w_{10}=\alpha(1-\beta)$, $w_{01}=(1-\alpha)\beta$, $w_{11}=\alpha\beta$. Các trọng số cộng bằng 1; vì vậy nút và điểm bên trong ô được dịch chuyển nhất quán.
+
+\begin{figure}[!ht]
+\centering
+\begin{tikzpicture}[scale=.64,>=Latex]
+\begin{scope}
+\draw[step=1,gray!65] (0,0) grid (4,4);
+\foreach \i in {0,...,4}\foreach \j in {0,...,4}
+ {\fill[teal!80!black] (\i,\j) circle (1.7pt);}
+\node at (2,-.45) {Lưới gốc $P$};
+\end{scope}
+\draw[->,thick] (4.45,2)--node[above] {$\theta_k$}(6.15,2);
+\begin{scope}[xshift=6.7cm]
+\foreach \i in {0,...,4}\foreach \j in {0,...,4}{
+ \pgfmathsetmacro{\qx}{\i+.4*sin(45*\i)*sin(45*\j)}
+ \pgfmathsetmacro{\qy}{\j+.3*sin(45*\i)*sin(90*\j)}
+ \coordinate (q\i\j) at (\qx,\qy);
+ \fill[teal!80!black] (q\i\j) circle (1.7pt);
+}
+\foreach \i in {0,...,4}\foreach \j in {0,...,3}{
+ \pgfmathtruncatemacro{\jj}{\j+1}\draw[teal!70!black] (q\i\j)--(q\i\jj);
+}
+\foreach \i in {0,...,3}\foreach \j in {0,...,4}{
+ \pgfmathtruncatemacro{\ii}{\i+1}\draw[teal!70!black] (q\i\j)--(q\ii\j);
+}
+\node at (2,-.45) {Lưới đích $Q^k$};
+\end{scope}
+\end{tikzpicture}
+\caption{Minh họa tự vẽ về dịch chuyển nút lưới. Đây là sơ đồ hình học, không phải kết quả thử nghiệm nhận dạng.}
+\end{figure}
+
+\newpage
+\section{Các bước thuật toán được hình thức hóa}
+Quy trình sau cụ thể hóa mô hình ở mục 3. Cấu hình căn chỉnh, nội suy, xử lý biên và bộ trích đặc trưng phải giữ nhất quán khi đăng ký và xác thực.
+
+\textbf{Bước 1 --- Căn chỉnh ảnh.} Phát hiện các mốc $\ell_r$ như hai mắt, mũi và đưa về mốc chuẩn $\bar\ell_r$. Chẳng hạn, ước lượng phép đồng dạng
+\begin{equation}\label{eq:align}
+ (s^*,R^*,b^*)=\underset{s>0,\ R\in SO(2),\ b\in\R^2}{\arg\min}
+ \sum_{r=1}^{L}\|sR\ell_r+b-\bar\ell_r\|_2^2.
+\end{equation}
+$SO(2)$ là tập ma trận quay hai chiều; $s$ là tỷ lệ và $b$ là tịnh tiến. Dùng nghiệm để lấy ảnh chuẩn $J=A(I)$. Nếu không tìm đủ mốc hoặc chất lượng không đạt thì yêu cầu thu lại ảnh; không bỏ qua lỗi này khi đánh giá hiệu năng.
+
+\textbf{Bước 2 --- Tạo và lưu cấu hình lưới.} Chọn $m,n$ và tập dịch chuyển $\{\delta_{ij}^k\}$ cho dịch vụ $d$, phiên bản $v$. Đặt $\delta_{ij}^k=0$ trên biên là một lựa chọn để giữ khung ảnh. Chọn cấu hình sao cho các ô đích phủ miền ảnh, không chồng lấn và không bị lật; kiểm tra hình học trước khi dùng. Cấu hình hợp lệ được giữ cố định cho phiên bản đó. Nếu tạo bằng bộ sinh giả ngẫu nhiên thì phải giữ cùng seed và cùng thuật toán; sinh lại nhiễu độc lập mỗi lần sẽ phá tính lặp lại.
+
+\textbf{Bước 3 --- Dựng ánh xạ tọa độ.} Với từng ô, dùng \eqref{eq:warp}. Kiểm tra Jacobian $\det DW_{\theta_k}>0$ trong ô giúp loại ô lật hoặc suy biến; kiểm tra này cần đi cùng điều kiện không chồng lấn toàn cục, không được tự coi là chứng minh song ánh của cả lưới.
+
+\textbf{Bước 4 --- Lấy mẫu ảnh biến dạng.} Với cấu hình một-một đã kiểm tra, duyệt pixel đích $q$, tìm ô đích chứa nó và giải
+\begin{equation}\label{eq:inverse}
+ q=\sum_{a,b\in\{0,1\}}w_{ab}(\alpha,\beta)Q_{i+a,j+b}^k,
+ \qquad 0\leq\alpha,\beta\leq1.
+\end{equation}
+Tọa độ nguồn và cường độ đích là
+\begin{equation}\label{eq:render}
+ p=\left(\frac{i+\alpha}{m},\frac{j+\beta}{n}\right),\qquad
+ J_k(q)=\Interp(J,p)=T_{\theta_k}(J)(q).
+\end{equation}
+$\Interp$ nội suy cường độ từ ảnh nguồn rời rạc, chẳng hạn nội suy song tuyến tính giữa bốn pixel lân cận. Nội suy cường độ ở đây khác với nội suy vị trí nút ở \eqref{eq:warp}. Lấy mẫu ngược giúp điền các pixel đích mà không tạo lỗ do chỉ đẩy pixel nguồn sang đích.
+
+\textbf{Bước 5 --- Đăng ký và xác thực.} Trích $f(J_k)$, lưu $t_{u,k}$ cùng chỉ mục phiên bản và trạng thái hoạt động. Khi có ảnh mới, lặp bước 1, 3, 4 với \emph{cùng cấu hình} $\theta_k$, rồi áp dụng \eqref{eq:decision}. Không cần giải biến dạng trước khi đối sánh. Ngưỡng được xác định trên dữ liệu phát triển độc lập với dữ liệu đánh giá.
+
+\textbf{Bước 6 --- Thu hồi và cấp lại.} Khi có sự cố, đặt $\mathrm{active}(u,k)=0$; tạo $k'=(d,v+1)$ với cấu hình mới; thu nhận ảnh đăng ký mới và tính
+\begin{equation}
+ t_{u,k'}=\Tpl_{k'}(I_u^{e,\mathrm{new}}),\qquad \mathrm{active}(u,k')=1.
+\end{equation}
+Không cần lưu lâu dài ảnh nguồn để thực hiện quy trình cấp lại này. Thay tham số phải đi kèm vô hiệu hóa đường xác thực phiên bản cũ.
+
+\note{Mô hình lưới một-một ở trên thuận tiện để mô tả và dựng ảnh. Chính khả năng tìm tọa độ nguồn ở bước 4 cho thấy mô hình này không tự bảo đảm irreversibility; cần đánh giá riêng ở mục 5.}
+
+\newpage
+\section{Grid Morphing đáp ứng bốn tiêu chí đến đâu?}
+\subsection{Revocability: có cơ chế, cần quản lý vòng đời}
+Việc thay $\theta_k$ cho phép tạo bản tham chiếu mới từ cùng khuôn mặt, phù hợp cơ chế cấp lại ở mục 19.5.1 \cite{adler}. Tuy nhiên, đổi tham số mà vẫn cho phép truy vấn phiên bản cũ không tạo ra thu hồi thực sự. Trong \eqref{eq:decision}, $\mathrm{active}(u,k)=0$ chặn yêu cầu dùng phiên bản cũ. Cần kiểm tra thêm mẫu cũ không dùng được để mạo danh dưới phiên bản mới; cờ trạng thái không tự chứng minh điều này. Nếu ảnh gốc đã lộ và đối thủ biết cấu hình mới, chỉ đổi lưới không khắc phục được sự cố.
+
+\subsection{Unlinkability: khác tham số chưa đủ}
+Trong mô hình này, $\Tpl_k(I)\ne\Tpl_{k'}(I)$ chỉ chứng minh hai biểu diễn khác nhau. Đối thủ vẫn có thể dùng cấu trúc còn giữ lại, ước lượng biến dạng hoặc kết hợp nhiều mẫu để suy ra cùng danh tính. Cần so sánh khả năng phân biệt \emph{cùng người, khác cấu hình} và \emph{khác người, khác cấu hình} của một bộ liên kết do đối thủ xây dựng. Việc hai mẫu không khớp bằng bộ đối sánh gốc chỉ là một kiểm tra ban đầu. Adler cũng yêu cầu các cấu hình biến dạng khác nhau không đối sánh được với nhau, đồng thời lưu ý còn thiếu phân tích an ninh \cite[tr.~393--395]{adler}.
+
+\subsection{Irreversibility: biến dạng hình học chưa đủ}
+Xét giới hạn ảnh liên tục của mô hình, bỏ qua sai số lấy mẫu. Nếu $W_{\theta_k}$ song ánh và đối thủ biết $\theta_k$ thì
+\begin{equation}\label{eq:recover}
+ J_k(q)=J(W_{\theta_k}^{-1}(q))
+ \quad\Longrightarrow\quad
+ J(p)=J_k(W_{\theta_k}(p)).
+\end{equation}
+Đây là phản ví dụ trực tiếp cho suy luận ``ảnh méo nên không đảo được''. Với ảnh rời rạc, nội suy có thể làm mất chi tiết, nhưng chưa có căn cứ để kết luận chi tiết mất đi đủ ngăn nhận dạng hoặc mạo danh. Nếu chỉ lộ đặc trưng $f(J_k)$, khả năng khôi phục còn phụ thuộc $f$; cũng không thể mặc nhiên coi bộ trích đặc trưng là một chiều. Nhận xét của Adler về việc gỡ biến dạng khi biết khóa phù hợp với phân tích này \cite[tr.~395]{adler}.
+
+Các phép ánh xạ nhiều-một trong miền đặc trưng được Ratha bàn ở phần khác của bài \cite[tr.~630--631]{ratha}; tính chất đó không tự chuyển sang mọi phép Grid Morphing. Hơn nữa, nhiều-một cũng chưa đủ chứng minh không lộ danh tính khi có thông tin phụ.
+
+\subsection{Performance preservation: cần kết quả thực nghiệm}
+Cùng một phép biến đổi cho hai ảnh không có nghĩa là giữ nguyên khoảng cách đặc trưng. Sai số căn chỉnh hoặc biến dạng quá mạnh có thể làm giảm khả năng trích đặc trưng. Để đánh giá mô hình, với điểm tương đồng $S_k$, định nghĩa
+\begin{align}
+ \mathrm{FMR}_k(\tau)&=\Pr[S_k\geq\tau\mid\text{hai người khác nhau}],\\
+ \mathrm{FNMR}_k(\tau)&=\Pr[S_k<\tau\mid\text{cùng một người}].
+\end{align}
+Ở cùng mức FMR mục tiêu $\gamma$, chọn ngưỡng riêng $\tau_k,\tau_0$ cho hệ bảo vệ và hệ gốc; so sánh
+\begin{equation}
+ \Delta_{\mathrm{FNMR}}=
+ \mathrm{FNMR}_k(\tau_k)-\mathrm{FNMR}_0(\tau_0).
+\end{equation}
+FMR/FNMR đo lỗi ở bước đối sánh; phải báo cáo riêng lỗi thu nhận hoặc trích đặc trưng, không loại im lặng các ca thất bại. Nên dùng cùng tập người, cùng cặp ảnh, cùng bộ trích và tách tập phát triển/đánh giá; báo cáo thêm ROC/DET, độ bất định và chi phí biến dạng \cite{iso30136}. Chương sách nói rõ ảnh mặt minh họa chưa nằm trong hệ thống triển khai \cite[tr.~394]{adler}. Vì vậy báo cáo này \textbf{không có số đo để xác nhận bảo toàn hiệu năng} cho ví dụ Grid Morphing đó.
+
+\newpage
+\section{Kết luận và truy vết nguồn}
+Grid Morphing đặt một phép biến dạng có tham số trước bộ trích đặc trưng, nhằm chuyển từ mẫu gắn cố định với khuôn mặt sang biểu diễn có thể thay đổi theo dịch vụ và phiên bản. Giá trị trực tiếp của ý tưởng là cơ chế \emph{cấp lại biểu diễn}; muốn thu hồi hiệu lực phải chặn phiên bản cũ. Unlinkability và irreversibility cần đánh giá với đối thủ biết cấu hình và có thể có nhiều mẫu; bảo toàn hiệu năng cần thực nghiệm trên cặp ảnh độc lập.
+
+Do đó, kết luận phù hợp với nguồn là: \textbf{Grid Morphing là một ý tưởng nền tảng trong cancelable face, nhưng ví dụ được trích không đủ chứng cứ để khẳng định đáp ứng đầy đủ cả bốn tiêu chí.} Mô hình song tuyến tính trong báo cáo giúp trình bày các bước rõ ràng và đồng thời chỉ ra giới hạn của phép biến dạng một-một.
+
+\begin{tabularx}{\linewidth}{@{}p{.36\linewidth}Y@{}}
+\toprule
+Nội dung cần kiểm tra & Vị trí nguồn / xuất xứ \\
+\midrule
+Tổng quan chương và vị trí kỹ thuật & Adler, chương 19, tr.~381--402; mục 19.5.1 ở tr.~393. \\
+Ý tưởng và minh họa Grid Morphing & Ratha và cộng sự, tr.~629--630, Hình~10; tài liệu [33] của chương sách. \\
+Giới hạn của ví dụ khuôn mặt & Adler, tr.~394--395. Số liệu vân tay ở tr.~395 thuộc phương pháp khác, không dùng làm số liệu cho Grid Morphing khuôn mặt. \\
+Thuật ngữ và đánh giá mẫu bảo vệ & ISO/IEC 24745:2022, các định nghĩa đã chỉ rõ ở mục 2; ISO/IEC 30136:2018 về đánh giá. \\
+Nội suy lưới, các bước và phản ví dụ & Hình thức hóa và phân tích của người viết; không phải mã nguồn hay kết quả thực nghiệm của tác giả bài gốc. \\
+\bottomrule
+\end{tabularx}
+
+\begin{thebibliography}{9}
+\small
+\bibitem{adler}
+A.~Adler, ``Biometric System Security,'' trong A.~K.~Jain, P.~Flynn và A.~A.~Ross (biên tập), \textit{Handbook of Biometrics}, Springer, 2008, chương~19, tr.~381--402.
+\href{https://doi.org/10.1007/978-0-387-71041-9}{DOI sách: 10.1007/978-0-387-71041-9}.
+\textit{Đọc trực tiếp bản PDF được cung cấp; số trang dùng theo sách.}
+
+\bibitem{ratha}
+N.~K.~Ratha, J.~H.~Connell và R.~M.~Bolle, ``Enhancing security and privacy in biometrics-based authentication systems,'' \textit{IBM Systems Journal}, 40(3), tr.~614--634, 2001.
+\href{https://doi.org/10.1147/sj.403.0614}{doi:10.1147/sj.403.0614}.
+\href{https://cedar.buffalo.edu/~govind/CSE717/papers/CancelableBiometrics.pdf}{Bản toàn văn lưu tại University at Buffalo}.
+
+\bibitem{iso2011}
+ISO/IEC, \textit{ISO/IEC 24745:2011 --- Information technology --- Security techniques --- Biometric information protection}, ấn bản~1, 2011.
+\url{https://www.iso.org/standard/52946.html}.
+\textit{Dùng trang thông tin xuất bản để đối chiếu niên đại.}
+
+\bibitem{iso2022}
+ISO/IEC, \textit{ISO/IEC 24745:2022 --- Information security, cybersecurity and privacy protection --- Biometric information protection}, ấn bản~2, 2022.
+\url{https://www.iso.org/standard/75302.html}.
+
+\bibitem{isopreview}
+ISO/IEC, \textit{ISO/IEC 24745:2022}, bản xem trước, mục 3.26, 3.33, 3.35, 3.38 và mục lục các phần 6--7.
+\href{https://cdn.standards.iteh.ai/samples/75302/c33df95b15cc47ddb401b17bd3807ee4/ISO-IEC-24745-2022.pdf}{Bản xem trước do iTeh phân phối}.
+\textit{Chỉ đối chiếu phần công khai; không tuyên bố đã đánh giá tuân thủ toàn bộ tiêu chuẩn.}
+
+\bibitem{iso30136}
+ISO/IEC, \textit{ISO/IEC 30136:2018 --- Information technology --- Performance testing of biometric template protection schemes}, 2018.
+\url{https://www.iso.org/standard/53256.html}.
+\href{https://cdn.standards.iteh.ai/sist-preview/53256/e8b2657f0df544f586cd382bde0c39db/ISO-IEC-30136-2018.pdf}{Bản xem trước, phần Scope}.
+\end{thebibliography}
+\end{document}
