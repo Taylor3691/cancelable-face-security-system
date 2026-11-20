@@ -11,21 +11,66 @@ Không gian tiềm ẩn StyleGAN gồm 18 tầng xác định thông tin các m�
 
 \subsection{Phát biểu bài toán}
 
-Các không gian và thành phần chính của hệ thống định nghĩa như sau:
-\begin{itemize}
-    \item \textbf{Các không gian biểu diễn:} $\mathcal{X}$ là không gian ảnh khuôn mặt; $\mathcal{W}^+$ là không gian tiềm ẩn có thể kiểm soát của StyleGAN2; và $\mathcal{K}$ là không gian khóa.
-    \item \textbf{Bộ mã hóa đảo ngược $\mathbf{E} : \mathcal{X} \rightarrow \mathcal{W}^+$:} sử dụng mạng tiền huấn luyện e4e (\textit{encoder for editing}) --- nhờ cân bằng tốt giữa độ trung thực tái tạo và khả năng chỉnh sửa trong $\mathcal{W}^+$ --- để ánh xạ ảnh khuôn mặt thật $\mathbf{x}_r \in \mathcal{X}$ sang mã tiềm ẩn $\mathbf{z}_r \in \mathcal{W}^+$. % TODO: bổ sung \cite{...} cho e4e (Tov et al., 2021) khi hoàn thiện references.bib
-    \item \textbf{Bộ sinh ảnh $\mathbf{D} : \mathcal{W}^+ \rightarrow \mathcal{X}$:} mô hình StyleGAN2 đã tiền huấn luyện, nhận mã tiềm ẩn trung gian (ví dụ $\mathbf{z}_f \in \mathcal{W}^+$) để sinh ảnh khuôn mặt tổng hợp tương ứng ($\mathbf{x}_f \in \mathcal{X}$).
-    \item \textbf{Hàm ánh xạ khóa $\mathbf{S} : \mathcal{K} \rightarrow \mathcal{W}^+$:} dùng khóa $\mathbf{k} \in \mathcal{K}$ làm hạt giống ngẫu nhiên (\textit{random seed}) để lấy mẫu mã tiềm ẩn $\mathbf{z}_f$.
-    \item \textbf{Hàm hòa trộn $\mathbf{M} : \mathcal{W}^+ \times \mathcal{W}^+ \rightarrow \mathcal{W}^+$:} kết hợp mã tiềm ẩn ảnh thật $\mathbf{z}_r$ với mã tiềm ẩn từ khóa $\mathbf{z}_f$ thành mã tiềm ẩn trộn $\mathbf{z}_p$.
-\end{itemize}
-
-Từ các thành phần trên, ý tưởng cốt lõi của FaceAnonyMixer là tổng hợp ảnh khuôn mặt được bảo vệ $\mathbf{x}_p \in \mathcal{X}$ theo biểu thức:
+Gọi $\mathcal{X}$ là không gian ảnh khuôn mặt và $\mathcal{K}$ là không gian khóa. Bộ so khớp khuôn mặt $\mathbf{F} : \mathcal{X} \times \mathcal{X} \rightarrow \{0, 1\}$ nhận đầu vào là hai ảnh $\mathbf{x}_1, \mathbf{x}_2 \in \mathcal{X}$ và trả về quyết định nhị phân:
 \begin{equation}
-\mathbf{x}_p = \mathbf{D}(\mathbf{z}_p), \quad \text{với } \mathbf{z}_p = \mathbf{M}(\mathbf{z}_r, \mathbf{z}_f), \quad \mathbf{z}_r = \mathbf{E}(\mathbf{x}_r), \quad \text{và } \mathbf{z}_f = \mathbf{S}(\mathbf{k}).
+\mathbf{F}(\mathbf{x}_1, \mathbf{x}_2) =
+\begin{cases}
+1, & \text{nếu } \mathbf{x}_1 \equiv \mathbf{x}_2 \text{ (cùng một người)}, \\
+0, & \text{nếu } \mathbf{x}_1 \not\equiv \mathbf{x}_2 \text{ (hai người khác nhau)}.
+\end{cases}
 \end{equation}
 
-Từ mã tiềm ẩn khởi tạo sau khi trộn $\mathbf{z}_p$, bài toán được quy về quá trình tìm kiếm mã tiềm ẩn tối ưu $\mathbf{z}_p^* \in \mathcal{W}^+$ (trong khi giữ cố định trọng số của $\mathbf{E}$ và $\mathbf{D}$) bằng cách cực tiểu hóa hàm mất mát đa mục tiêu:
+Mục tiêu của bài toán là xây dựng bộ sinh khuôn mặt có thể hủy $\mathbf{G} : \mathcal{X} \times \mathcal{K} \rightarrow \mathcal{X}$, nhận ảnh thật $\mathbf{x}_r \in \mathcal{X}$ và khóa $\mathbf{k} \in \mathcal{K}$ để tạo ảnh bảo vệ $\mathbf{x}_p = \mathbf{G}(\mathbf{x}_r, \mathbf{k}) \in \mathcal{X}$ thỏa mãn bốn yêu cầu sau:
+\begin{enumerate}
+    \item \textbf{Tính ẩn danh :} Ảnh bảo vệ $\mathbf{x}_p$ không được khớp với ảnh gốc $\mathbf{x}_r$ với mọi $\mathbf{x}_r \in \mathcal{X}$ và $\mathbf{k} \in \mathcal{K}$:
+    \[
+    P\bigl(\mathbf{F}(\mathbf{x}_r, \mathbf{x}_p) = 0 \mid \mathbf{x}_p = \mathbf{G}(\mathbf{x}_r, \mathbf{k})\bigr) \;\text{cao}.
+    \]
+
+    \item \textbf{Bảo toàn danh tính :} Với $\mathbf{x}_{p1} = \mathbf{G}(\mathbf{x}_{r1}, \mathbf{k})$ và $\mathbf{x}_{p2} = \mathbf{G}(\mathbf{x}_{r2}, \mathbf{k})$ dùng chung khóa $\mathbf{k}$, các ảnh bảo vệ của cùng một người cùng một khóa phải khớp nhau (tỷ lệ từ chối nhầm thấp), còn của hai người khác nhau phải tách biệt (tỷ lệ chấp nhận nhầm thấp):
+    \[
+    \begin{aligned}
+    P\bigl(\mathbf{F}(\mathbf{x}_{p1}, \mathbf{x}_{p2}) = 0 \mid \mathbf{x}_{r1} \equiv \mathbf{x}_{r2}\bigr) &\;\text{thấp}, \\
+    P\bigl(\mathbf{F}(\mathbf{x}_{p1}, \mathbf{x}_{p2}) = 1 \mid \mathbf{x}_{r1} \not\equiv \mathbf{x}_{r2}\bigr) &\;\text{thấp}.
+    \end{aligned}
+    \]
+
+    \item \textbf{Tính không thể liên kết :} Các ảnh bảo vệ $\mathbf{x}_{p1} = \mathbf{G}(\mathbf{x}_r, \mathbf{k}_1)$ và $\mathbf{x}_{p2} = \mathbf{G}(\mathbf{x}_r, \mathbf{k}_2)$ tạo từ cùng một ảnh thật với hai khóa khác nhau không được khớp nhau:
+    \[
+    P\bigl(\mathbf{F}(\mathbf{x}_{p1}, \mathbf{x}_{p2}) = 0\bigr) \;\text{cao}.
+    \]
+
+    \item \textbf{Tính không thể đảo ngược :} Ngay cả khi học được ánh xạ ngược $\mathbf{G}^{-1} : \mathcal{X} \times \mathcal{K} \rightarrow \mathcal{X}$ để tái tạo $\hat{\mathbf{x}}_r = \mathbf{G}^{-1}(\mathbf{G}(\mathbf{x}_r, \mathbf{k}), \mathbf{k})$ từ ảnh bảo vệ và khóa, ảnh $\hat{\mathbf{x}}_r$ vẫn không được khớp với ảnh gốc $\mathbf{x}_r$:
+    \[
+    P\bigl(\mathbf{F}(\mathbf{x}_r, \hat{\mathbf{x}}_r) = 0 \mid \hat{\mathbf{x}}_r = \mathbf{G}^{-1}(\mathbf{G}(\mathbf{x}_r, \mathbf{k}), \mathbf{k})\bigr) \;\text{cao}.
+    \]
+\end{enumerate}
+
+Ý tưởng cốt lõi của FaceAnonyMixer nhằm hiện thực bộ sinh $\mathbf{G}$ đáp ứng các yêu cầu trên là tổng hợp ảnh khuôn mặt được bảo vệ $\mathbf{x}_p \in \mathcal{X}$ theo quy trình từng bước:
+\begin{equation}
+\left.
+\begin{aligned}
+\mathbf{z}_f &= \mathbf{S}(\mathbf{k}) \\
+\mathbf{z}_r &= \mathbf{E}(\mathbf{x}_r)
+\end{aligned}
+\right\}
+\longrightarrow
+\mathbf{z}_p = \mathbf{M}(\mathbf{z}_r, \mathbf{z}_f)
+\longrightarrow
+\mathbf{x}_p = \mathbf{D}(\mathbf{z}_p).
+\end{equation}
+
+Trong đó:
+\begin{itemize}
+    \item \textbf{Hàm ánh xạ khóa $\mathbf{S} : \mathcal{K} \rightarrow \mathcal{W}^+$:} dùng khóa $\mathbf{k} \in \mathcal{K}$ làm hạt giống ngẫu nhiên (\textit{random seed}) để lấy mẫu mã tiềm ẩn $\mathbf{z}_f$ trong không gian tiềm ẩn $\mathcal{W}^+$ của StyleGAN2.
+    \item \textbf{Bộ mã hóa đảo ngược $\mathbf{E} : \mathcal{X} \rightarrow \mathcal{W}^+$:} sử dụng mạng tiền huấn luyện e4e để ánh xạ ảnh khuôn mặt thật $\mathbf{x}_r \in \mathcal{X}$ sang mã tiềm ẩn $\mathbf{z}_r \in \mathcal{W}^+$. % TODO: bổ sung \cite{...} cho e4e (Tov et al., 2021) khi hoàn thiện references.bib
+    \item \textbf{Hàm hòa trộn $\mathbf{M} : \mathcal{W}^+ \times \mathcal{W}^+ \rightarrow \mathcal{W}^+$:} kết hợp mã tiềm ẩn ảnh thật $\mathbf{z}_r$ với mã tiềm ẩn từ khóa $\mathbf{z}_f$ thành mã tiềm ẩn trộn $\mathbf{z}_p$.
+    \item \textbf{Bộ sinh ảnh $\mathbf{D} : \mathcal{W}^+ \rightarrow \mathcal{X}$:} mô hình StyleGAN2 đã tiền huấn luyện, nhận mã tiềm ẩn trung gian (ví dụ $\mathbf{z}_f \in \mathcal{W}^+$) để sinh ảnh khuôn mặt tổng hợp tương ứng ($\mathbf{x}_f \in \mathcal{X}$).
+\end{itemize}
+
+\pagebreak
+
+Từ mã tiềm ẩn khởi tạo sau khi trộn $\mathbf{z}_p$, mục tiêu phương pháp được quy về quá trình tìm kiếm mã tiềm ẩn tối ưu $\mathbf{z}_p^* \in \mathcal{W}^+$ (trong khi cố định trọng số của $\mathbf{E}$ và $\mathbf{D}$) bằng cách cực tiểu hóa hàm mất mát đa mục tiêu:
 \begin{equation}
 \mathbf{z}_p^* = \operatorname*{arg\,min}_{\mathbf{z}_p \in \mathcal{W}^+} \mathcal{L}_{\text{total}} = \operatorname*{arg\,min}_{\mathbf{z}_p \in \mathcal{W}^+} \left( \lambda_1 \mathcal{L}_{\text{anon}} + \lambda_2 \mathcal{L}_{\text{idp}} + \lambda_3 \mathcal{L}_{\text{attr}} \right),
 \end{equation}
@@ -36,3 +81,9 @@ trong đó $\lambda_1, \lambda_2, \lambda_3$ là các siêu tham số điều ch
     \item $\mathcal{L}_{\text{attr}}$ (\textit{Attribute Preservation Loss}): bảo toàn các thuộc tính phi danh tính (tư thế, biểu cảm, ánh sáng) giữa $\mathbf{x}_p$ và $\mathbf{x}_r$, nhằm duy trì độ tự nhiên thị giác và tính hữu dụng cho các tác vụ hạ nguồn.
 \end{itemize}
 Cuối cùng, ảnh khuôn mặt được bảo vệ hoàn chỉnh thu được thông qua phép giải mã $\mathbf{x}_p = \mathbf{D}(\mathbf{z}_p^*)$, qua đó đáp ứng trọn vẹn bốn yêu cầu của sinh trắc học có thể hủy theo chuẩn ISO/IEC 24745 mà không cần huấn luyện lại mô hình khi thay đổi khóa $\mathbf{k}$.
+
+\pagebreak
+
+\section{Thuật toán}
+\label{sec::thuat-toan}
+
