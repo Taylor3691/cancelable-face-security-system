@@ -11,25 +11,27 @@ except ImportError:
     _FA_AVAILABLE = False
 
 
-# Reference 5-point landmarks for a 256×256 canonical crop.
-# (left-eye, right-eye, nose, left-mouth, right-mouth)
-_REF_LANDMARKS_256 = np.array([
-    [73.5318,  90.3065],
-    [182.4682, 90.3065],
-    [128.0,    152.9873],
-    [85.5172,  202.5765],
-    [170.4828, 202.5765],
-], dtype=np.float32)
+# FFHQ reference alignment helper (matches StyleGAN2 / e4e canonical framing).
+def _ffhq_quad_from_68(lm68: np.ndarray) -> np.ndarray:
+    """Compute the 4 FFHQ crop corners (TL, BL, BR, TR) from 68 landmarks."""
+    eye_left = lm68[36:42].mean(axis=0)
+    eye_right = lm68[42:48].mean(axis=0)
+    eye_avg = (eye_left + eye_right) * 0.5
+    eye_to_eye = eye_right - eye_left
+    mouth_left = lm68[48]
+    mouth_right = lm68[54]
+    mouth_avg = (mouth_left + mouth_right) * 0.5
+    eye_to_mouth = mouth_avg - eye_avg
 
-
-def _get_5pt_from_68(landmarks_68):
-    """Collapse 68-point landmarks to 5-point landmarks."""
-    left_eye  = landmarks_68[36:42].mean(axis=0)
-    right_eye = landmarks_68[42:48].mean(axis=0)
-    nose      = landmarks_68[30]
-    left_mouth  = landmarks_68[48]
-    right_mouth = landmarks_68[54]
-    return np.array([left_eye, right_eye, nose, left_mouth, right_mouth], dtype=np.float32)
+    x = eye_to_eye - np.flipud(eye_to_mouth) * [-1, 1]
+    x_norm = np.hypot(*x)
+    if x_norm < 1e-6:
+        raise ValueError('Degenerate landmarks')
+    x /= x_norm
+    x *= max(np.hypot(*eye_to_eye) * 2.0, np.hypot(*eye_to_mouth) * 1.8)
+    y = np.flipud(x) * [-1, 1]
+    c = eye_avg + eye_to_mouth * 0.1
+    return np.stack([c - x - y, c - x + y, c + x + y, c + x - y]).astype(np.float32)
 
 
 class FaceAligner:
@@ -46,7 +48,6 @@ class FaceAligner:
 
     def __init__(self, device='cuda', output_size=256):
         self.output_size = output_size
-        self.ref = _REF_LANDMARKS_256 * (output_size / 256.0)
         self._fa = None
 
         if _FA_AVAILABLE:
@@ -90,8 +91,8 @@ class FaceAligner:
                 preds = self._fa.get_landmarks(img_rgb)
                 if preds is not None and len(preds) > 0:
                     lm68 = preds[0]  # (68, 2)
-                    lm5  = _get_5pt_from_68(lm68)
-                    return self._warp(img_rgb, lm5)
+                    quad = _ffhq_quad_from_68(lm68)
+                    return self._warp(img_rgb, quad)
             except Exception as exc:
                 if alignment_errors_file:
                     self._log(alignment_errors_file,
@@ -106,22 +107,21 @@ class FaceAligner:
 
     # ── private helpers ───────────────────────────────────────────────────────
 
-    def _warp(self, img_rgb: np.ndarray, lm5: np.ndarray) -> np.ndarray:
-        """Estimate a similarity transform from *lm5* to the reference and
-        warp the image."""
-        M, _ = cv2.estimateAffinePartial2D(
-            lm5, self.ref,
-            method=cv2.LMEDS,
-        )
-        if M is None:
-            return self._centre_crop(img_rgb)
-        warped = cv2.warpAffine(
+    def _warp(self, img_rgb: np.ndarray, quad: np.ndarray) -> np.ndarray:
+        """Warp the FFHQ crop *quad* (TL, BL, BR, TR) to (output_size, output_size)."""
+        src_pts = quad[[0, 1, 3]]  # TL, BL, TR
+        dst_pts = np.array([
+            [0.0, 0.0],
+            [0.0, float(self.output_size)],
+            [float(self.output_size), 0.0],
+        ], dtype=np.float32)
+        M = cv2.getAffineTransform(src_pts, dst_pts)
+        return cv2.warpAffine(
             img_rgb, M,
             (self.output_size, self.output_size),
             flags=cv2.INTER_LINEAR,
-            borderMode=cv2.BORDER_REFLECT,
+            borderMode=cv2.BORDER_REFLECT_101,
         )
-        return warped
 
     def _centre_crop(self, img_rgb: np.ndarray) -> np.ndarray:
         """Fallback: resize and centre-crop to output_size."""
