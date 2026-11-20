@@ -24,9 +24,10 @@ class GradualStyleBlock(Module):
         self.out_c   = out_c
         self.spatial = spatial
         num_pools = int(np.log2(spatial))
-        modules  = [Conv2d(in_c, out_c, 3, stride=2, padding=1), nn.LeakyReLU()]
-        modules += [Conv2d(out_c, out_c, 3, stride=2, padding=1), nn.LeakyReLU()] * (num_pools - 1)
-        self.convs  = nn.Sequential(*modules)
+        modules = [Conv2d(in_c, out_c, 3, stride=2, padding=1), nn.LeakyReLU()]
+        for _ in range(num_pools - 1):
+            modules += [Conv2d(out_c, out_c, 3, stride=2, padding=1), nn.LeakyReLU()]
+        self.convs = nn.Sequential(*modules)
         self.linear = EqualLinear(out_c, out_c, lr_mul=1)
 
     def forward(self, x):
