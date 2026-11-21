@@ -7,8 +7,8 @@ pre-generated fake pools:
   1. Align and invert input face(s) into StyleGAN2's W+ space (e4e + PTI).
   2. Deterministically map each key to a synthetic W+ code z_f = S(k).
   3. Generate mild augmentations for single-image inputs (or use real views).
-  4. Mix layers (0:3 fake, 3:18 real) and optimize layers 3:8 under
-     L_anon + L_attr + L_idp.
+  4. Mix layers (0:3 real, 3:8 fake, 8:18 real; Eq. 1) and optimize layers 3:8
+     under L_anon + L_attr + L_idp.
   5. Save native 1024x1024 protected face(s) and optional comparison grid.
 
 Usage
@@ -222,7 +222,10 @@ def main():
             if args.visualize:
                 recon_pils.append(tensor2image(recons[i].cpu(), adaptive=True))
             if args.save_latents:
-                torch.save(real_latents[i].cpu(), osp.join(latents_dir, f'{stem}_inv.pt'))
+                torch.save(
+                    real_latents[i].detach().cpu().clone(),
+                    osp.join(latents_dir, f'{stem}_inv.pt'),
+                )
 
     # Build augmented views for single-image identity consistency (Algorithm 1, Step 4)
     all_imgs = list(real_tensors)
@@ -261,8 +264,8 @@ def main():
         if args.verbose:
             print(f'#. Protecting with key="{key}" (seed={seed}) ...')
 
-        gen = torch.Generator(device=device).manual_seed(seed)
-        z_fake = torch.randn(1, G.dim_z, generator=gen, device=device)
+        gen = torch.Generator().manual_seed(seed)
+        z_fake = torch.randn(1, G.dim_z, generator=gen).to(device)
         with torch.no_grad():
             w_fake = G.get_w(z_fake, truncation=args.truncation)
             if args.visualize:
@@ -296,7 +299,7 @@ def main():
 
             anon_batch = torch.cat(anon_images, dim=0)
             total_id = sum(id_criterion(ai, oi) for ai, oi in zip(anon_images, all_imgs))
-            total_attr = sum(attr_loss_fn(oi, ai) for ai, oi in zip(anon_images, all_imgs))
+            total_attr = sum(attr_loss_fn(ai, oi) for ai, oi in zip(anon_images, all_imgs))
             cons = cons_loss_fn(anon_batch)
 
             loss = (
@@ -323,7 +326,7 @@ def main():
                 print(f'   Saved protected image: {out_img_path}')
             if args.save_latents:
                 torch.save(
-                    latent_codes[i]().detach().cpu(),
+                    latent_codes[i]().squeeze(0).detach().cpu().clone(),
                     osp.join(latents_dir, f'{stem}_key_{safe_tag}.pt'),
                 )
             if args.visualize:

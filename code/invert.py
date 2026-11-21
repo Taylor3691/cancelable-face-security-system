@@ -180,7 +180,7 @@ class PivotTuningInversion:
             recons  = gen_out['image'] if isinstance(gen_out, dict) else gen_out
 
         for i, (_, stem, lat_path) in enumerate(pending):
-            torch.save(w_opt[i], lat_path)
+            torch.save(w_opt[i].detach().cpu().clone(), lat_path)
             tensor2image(recons[i].cpu(), adaptive=True).save(
                 osp.join(self.recon_dir, f'{stem}_recon.jpg'),
                 'JPEG', quality=90, subsampling=0, progressive=True,
