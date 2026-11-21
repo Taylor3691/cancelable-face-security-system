@@ -53,6 +53,8 @@ class AttrLoss(nn.Module):
             self.feat_ext_transform = transforms.Compose([
                 transforms.Resize(224, antialias=True),
                 transforms.CenterCrop(224),
+                transforms.Normalize((0.48145466, 0.4578275, 0.40821073),
+                                     (0.26862954, 0.26130258, 0.27577711)),
             ])
 
         else:  # dino
@@ -95,14 +97,18 @@ class AttrLoss(nn.Module):
         """Compute L1 attribute loss between *y_hat* (protected) and *y* (original).
 
         Args:
-            y_hat: protected face, shape (B, 3, H, W).
-            y:     original face,  shape (B, 3, H, W).
+            y_hat: protected face in [-1, 1], shape (B, 3, H, W).
+            y:     original face in [-1, 1],  shape (B, 3, H, W).
 
         Returns:
             Scalar attribute loss.
         """
-        _, y_fts     = self._extract_visual(self.feat_ext_transform(y))
-        _, y_hat_fts = self._extract_visual(self.feat_ext_transform(y_hat))
+        y_01     = (y.clamp(-1.0, 1.0) + 1.0) * 0.5
+        y_hat_01 = (y_hat.clamp(-1.0, 1.0) + 1.0) * 0.5
+
+        with torch.no_grad():
+            _, y_fts = self._extract_visual(self.feat_ext_transform(y_01))
+        _, y_hat_fts = self._extract_visual(self.feat_ext_transform(y_hat_01))
 
         loss = sum(
             self.l1(y_fts[:, i].float(), y_hat_fts[:, i].float())
