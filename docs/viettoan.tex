@@ -1,0 +1,157 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage[margin=2.3cm]{geometry}
+\usepackage{fontspec}
+\setmainfont{TeX Gyre Termes}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{pdflscape}
+\usepackage{afterpage}
+\usepackage{booktabs,tabularx,array}
+\usepackage{caption}
+\usepackage[hidelinks]{hyperref}
+\usepackage{enumitem}
+\setlist{nosep,leftmargin=1.4em}
+\linespread{1.12}
+\hyphenpenalty=10000 \exhyphenpenalty=10000 \emergencystretch=2em
+\captionsetup{font=small,labelfont=bf}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+\renewcommand{\refname}{Tài liệu tham khảo}
+\renewcommand{\figurename}{Hình}
+\renewcommand{\tablename}{Bảng}
+
+\begin{document}
+
+\section{Đánh giá phương pháp Grid Morphing}
+
+\subsection{Nguyên lý tóm tắt}
+Trong Chương 19 \emph{Biometric System Security}~\cite{adler2008}, kỹ thuật này được trình bày ở mục 19.5.1 \emph{Revocable Biometrics} (thuộc 19.5 \emph{Encoded Biometric Schemes}, tr.~393--395) và minh hoạ bằng Hình 19.4(a), một khuôn mặt bị biến dạng quanh vùng mắt, trích từ công trình gốc~\cite{ratha2001}. Mục 19.5 đặt vấn đề như sau: mật khẩu chỉ cần lưu ở dạng băm một chiều, trong khi hệ thống sinh trắc cổ điển phải lưu template ở dạng chưa mã hoá; vì vậy cần các phương pháp tương tự cho sinh trắc~\cite[tr.~393]{adler2008}. Revocable biometrics, khái niệm do Ratha và cộng sự đề xuất, là một hướng như vậy. Khi đăng ký, ảnh sinh trắc đầu vào bị biến dạng theo một cách đã biết, được điều khiển bởi một bộ tham số biến dạng, tức là key. Ảnh đã biến dạng sau đó được xử lý bằng các thuật toán sinh trắc chuẩn. Khi so khớp, mẫu sinh trắc mới phải được biến dạng theo đúng cách đó, nếu không sẽ không khớp với mẫu đã đăng ký~\cite[tr.~393]{adler2008}. Hệ thống không lưu sinh trắc ``thật'' của người dùng mà chỉ lưu một trong vô số phiên bản biến dạng có thể có, nên khi bị lộ chỉ cần đổi tham số biến dạng. Với khuôn mặt, bài gốc mô tả cách làm cụ thể: đặt một lưới lên ảnh, căn theo các đặc điểm trên khuôn mặt, rồi biến dạng (morph) lưới để thu được một khuôn mặt méo~\cite[Fig.~10]{ratha2001}. Cả sách lẫn bài gốc đều không nêu công thức cụ thể cho phép biến dạng này.
+
+\subsection{Đánh giá theo bốn tiêu chí ISO/IEC 24745}
+ISO/IEC 24745~\cite{iso24745} yêu cầu một template được bảo vệ phải thoả bốn tính chất (định nghĩa theo~\cite{alam2025}): \emph{revocability}, tức đổi key là thu hồi được template; \emph{unlinkability}, tức các template sinh từ những key khác nhau không so khớp chéo được; \emph{irreversibility}, tức không khôi phục được sinh trắc gốc kể cả khi biết template và key; và \emph{performance preservation}, tức độ chính xác gần bằng hệ thống không bảo vệ. Đối chiếu Grid Morphing với từng tiêu chí:
+
+\textbf{Revocability – đạt.} Đây là điểm mạnh cốt lõi và là đóng góp chính của~\cite{ratha2001}. Có vô số cách biến dạng lưới, nên lộ template thì chỉ cần cấp key mới, giống như đổi mật khẩu.
+
+\textbf{Irreversibility – yếu.} Ratha nêu tính không khả nghịch là yêu cầu \emph{lý tưởng}~\cite[p.~629]{ratha2001}. Tuy nhiên, các ví dụ không khả nghịch được đưa ra đều ở miền đặc trưng (hàm đa thức, ánh xạ nhiều-một giữa các block), không phải phép morph ảnh. Để ảnh méo vẫn còn là một khuôn mặt, phép biến dạng lưới phải trơn và không gấp nếp, tức là song ánh. Do đó: (i) biết $k$ thì đảo ngược trực tiếp được; (ii) không biết $k$, toàn bộ nội dung điểm ảnh (da, màu mắt, tóc) vẫn được giữ nguyên, chỉ vị trí bị dời, nên kẻ tấn công có thể ước lượng phép nắn ngược bằng cách căn ảnh méo về một khuôn mặt trung bình. Giáo trình cũng đi đến cùng kết luận: việc ``gỡ biến dạng'' (undistort) template là tầm thường khi biết key, và vì key khó được bảo vệ tốt hơn mật khẩu hay PIN, trong nhiều kịch bản lược đồ này không an toàn hơn một template truyền thống được mã hoá~\cite[tr.~395]{adler2008}.
+
+\textbf{Unlinkability – không được đảm bảo với FR hiện đại.} Giáo trình nêu đây là một ràng buộc thiết kế: các bộ tham số biến dạng khác nhau không được khớp với nhau~\cite[tr.~393]{adler2008}. Tuy nhiên, Ratha chỉ lập luận định tính cho điều này~\cite[p.~629]{ratha2001}, và giáo trình xác nhận chưa có phân tích bảo mật nào cho các lược đồ này~\cite[tr.~395]{adler2008}. Hơn nữa, lập luận của Ratha dựa trên bộ so khớp hình học của năm 2001. Các mô hình FR học sâu được huấn luyện để bất biến với biến dạng hình học (tư thế, biểu cảm) và dựa nhiều vào kết cấu bề mặt, đúng phần mà Grid Morphing giữ nguyên. Vì thế, nhóm đánh giá có nguy cơ cao hai template của cùng một người, dù dùng hai key khác nhau, vẫn bị liên kết được.
+
+\textbf{Performance preservation – yếu.} Tính lặp lại của phép biến đổi phụ thuộc hoàn toàn vào việc định vị chính xác các điểm đặc trưng trước khi đặt lưới~\cite[p.~630]{ratha2001}. Chỉ cần lệch vài điểm ảnh, lưới đặt khác đi, ảnh méo ở lần xác thực khác ảnh méo lúc đăng ký, kéo theo tăng tỷ lệ từ chối nhầm. Bài gốc cũng không báo cáo kết quả thực nghiệm độ chính xác trên khuôn mặt, và giáo trình lưu ý rằng ảnh khuôn mặt ở Hình 19.4 không thuộc một hệ thống đã được hiện thực~\cite[tr.~394]{adler2008}.
+
+\subsection{Khả năng tương thích với hệ thống FR hiện tại}
+Giáo trình xem tính tương thích là ưu điểm then chốt: ảnh đã biến dạng được xử lý bằng các thuật toán sinh trắc chuẩn, vốn ``không biết'' đầu vào đã bị biến dạng, nên lược đồ độc lập với thuật toán so khớp~\cite[tr.~393]{adler2008}. Với khuôn mặt, biến dạng buộc phải thực hiện trên ảnh thô vì đặc trưng khuôn mặt không được chuẩn hoá~\cite[tr.~394]{adler2008}. Tuy nhiên, chính giáo trình chỉ ra giới hạn: điều này đặt ràng buộc chặt lên dạng biến dạng, vì khuôn mặt méo mạnh sẽ không được thuật toán nhận dạng và mã hoá đúng~\cite[tr.~394]{adler2008}. Với FR học sâu ngày nay, vấn đề còn rõ hơn: ảnh méo nằm ngoài phân bố khuôn mặt tự nhiên mà mạng được huấn luyện, và các phương pháp biến đổi trong miền ảnh kiểu này sinh artifact thiếu tự nhiên mà hệ FR hiện đại có thể phát hiện~\cite{alam2025}. Như vậy Grid Morphing tương thích về \emph{giao diện}, vì đầu vào và đầu ra đều là ảnh, nhưng không tương thích về \emph{phân bố dữ liệu}: nó \emph{cắm vào} được hệ FR có sẵn nhưng không \emph{dùng tốt} được.
+
+\subsection{Đánh đổi giữa độ chính xác và bảo mật}
+Toàn bộ mức bảo mật của Grid Morphing được điều khiển bởi một đại lượng duy nhất: mức độ biến dạng lưới. Biến dạng nhẹ thì ảnh gần giống gốc, giữ được độ chính xác nhưng dễ bị liên kết và nhận ra danh tính. Biến dạng mạnh thì khó liên kết hơn nhưng khuôn mặt méo mạnh, độ chính xác giảm. Đây chính là ``ràng buộc chặt'' mà giáo trình nhắc tới~\cite[tr.~394]{adler2008}. Đánh đổi này không tránh được vì phép biến đổi \emph{mù về ngữ nghĩa}: nó dời mọi vùng như nhau và không phân biệt thông tin nào mang danh tính, thông tin nào không. Bảng~\ref{tab:gm} tóm tắt đánh giá.
+
+\begin{table}[h]
+\centering\small
+\caption{Tóm tắt ưu, nhược điểm của Grid Morphing~\cite{ratha2001}.}
+\label{tab:gm}
+\begin{tabularx}{\linewidth}{@{}l c Y@{}}
+\toprule
+Khía cạnh & Mức & Lý do chính \\
+\midrule
+Revocability & Đạt & Đổi key là có template mới, không gian key lớn \\
+Irreversibility & Yếu & Phép nắn trơn là song ánh; gỡ biến dạng tầm thường khi biết key \\
+Unlinkability & Yếu & FR học sâu bất biến hình học, vẫn nhận ra qua kết cấu \\
+Performance & Yếu & Phụ thuộc định vị điểm đặc trưng; ảnh méo làm giảm độ chính xác \\
+Tương thích FR & Một phần & Độc lập bộ so khớp, nhưng ảnh méo nằm ngoài phân bố, có artifact \\
+Đánh đổi & Gắn chặt & Một mức độ biến dạng điều khiển cả bảo mật lẫn độ chính xác \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\section{Các phương pháp cải tiến theo hướng hoán vị/biến dạng trên lưới}
+Sau~\cite{ratha2001}, nhiều công trình giữ ý tưởng chia tín hiệu thành lưới hoặc khối rồi hoán vị, dịch chuyển hay nắn theo key, nhưng cố khắc phục từng nhược điểm riêng lẻ.
+\begin{itemize}
+  \item \textbf{Ratha et al. (2006)}~\cite{ratha2006}, được giáo trình trích là~[34], chuyển biến dạng từ ảnh thô sang tập minutiae của vân tay, hoán vị cả vị trí lẫn góc. Cách làm này vừa tăng bậc tự do của phép biến đổi, vừa tránh việc biến dạng ảnh làm hỏng bước trích đặc trưng. Biến dạng được mô hình theo phân bố điện trường của các điện tích ngẫu nhiên, và FRR chỉ tăng khoảng 5\%~\cite[tr.~395]{adler2008}.
+  \item \textbf{Ratha et al. (2007)}~\cite{ratha2007} hình thức hoá hướng này cho vân tay bằng ba phép biến đổi trên minutiae: Cartesian (chia lưới ô rồi hoán vị ô theo key), polar và functional. Điểm mới là chủ động cho phép nhiều ô nguồn rơi vào cùng một ô đích (ánh xạ nhiều-một), nhờ đó tăng tính không khả nghịch. Cái giá là thêm va chạm thì độ chính xác giảm, và phương pháp vẫn cần định vị điểm tham chiếu (core) để căn lưới.
+  \item \textbf{Zuo et al. (2008)}~\cite{zuo2008} đưa ý tưởng sang mống mắt: các hàng của ảnh iris đã chuẩn hoá hoặc của iris code được dịch vòng và kết hợp theo key. Cấu trúc hàng–cột của ảnh iris chuẩn hoá thay cho việc phải căn lưới theo điểm đặc trưng.
+  \item \textbf{Hämmerle-Uhl et al. (2009)}~\cite{hammerle2009} áp dụng block re-mapping và image warping lên kết cấu mống mắt ngay trong miền ảnh, nhằm giữ nguyên bộ trích đặc trưng sẵn có của hệ thống.
+  \item \textbf{OTB-Morph (2023)}~\cite{ghafourian2023} quay lại với khuôn mặt: thay vì dời lưới ngẫu nhiên, ảnh được morph với thông tin sinh trắc ngẫu nhiên, sinh ra key thay đổi theo thời gian (one-time biometrics).
+\end{itemize}
+Bài báo~\cite{alam2025} xếp block permutation~\cite{ratha2001} và image morphing~\cite{ghafourian2023} vào nhóm phương pháp miền ảnh thế hệ đầu, với nhận xét chung là chúng tạo ra artifact thiếu tự nhiên.
+
+\paragraph{Khoảng trống của nhóm phương pháp.} Dù hoán vị khối, dịch hàng hay nắn lưới, các phương pháp này có chung một bản chất: chúng thao tác trên \emph{vị trí} của thông tin (ô, khối, hàng, nút lưới) chứ không trên \emph{ý nghĩa} của thông tin. Từ đó phát sinh ba hạn chế nối tiếp nhau. Thứ nhất, vì phép biến đổi phần lớn chỉ sắp xếp lại nội dung, thông tin danh tính vẫn còn nguyên trong template; muốn không khả nghịch thì phải cố ý làm mất thông tin (ánh xạ nhiều-một), và việc đó trực tiếp làm giảm độ chính xác. Thứ hai, vì không phân biệt vùng nào mang danh tính, cường độ biến đổi vừa quyết định bảo mật vừa quyết định độ chính xác, nên hai mục tiêu bị khoá chặt vào nhau. Thứ ba, đầu ra là ảnh có artifact, nằm ngoài phân bố mà các mô hình FR hiện đại học, nên lợi thế ``đầu ra vẫn là ảnh'' không chuyển thành khả năng tương thích thực sự. Từ đó, nhóm đặt câu hỏi nghiên cứu đại diện:
+
+\begin{quote}
+\emph{Làm thế nào để thiết kế một phép biến đổi phụ thuộc key, tác động có chọn lọc lên thông tin định danh thay vì lên toàn bộ cấu trúc hình học, sao cho ảnh sinh ra vẫn là khuôn mặt tự nhiên, nhận dạng được bằng hệ FR có sẵn mà không phải hy sinh tính không khả nghịch và không liên kết?}
+\end{quote}
+
+\clearpage
+\section{Từ khoảng trống đến phương pháp FaceAnonyMixer}
+Một hướng tự nhiên để trả lời câu hỏi trên là chuyển từ \emph{biến dạng} ảnh sang \emph{sinh} ảnh. CanFG~\cite{wang2024canfg} đi theo hướng này: nó tạo ra một ``danh tính ảo'' thông qua phép biến đổi bảo toàn khoảng cách, rồi sinh ảnh khuôn mặt mang danh tính ảo đó, nhờ vậy loại bỏ được phần lớn artifact hình học của Grid Morphing. Tuy nhiên, theo phân tích của~\cite{alam2025}, CanFG vẫn mang lại đúng những nhược điểm cũ dưới dạng mới. Về bảo mật, ảnh bảo vệ vẫn giống ảnh gốc về mặt thị giác, và ảnh sinh từ các key khác nhau ít đa dạng do bị giới hạn bởi bộ sinh U-Net, làm tăng nguy cơ liên kết. Về khả năng nhận dạng, tối ưu đối kháng để lại méo mó ở các vùng mặt quan trọng. Về tính thực tiễn, mỗi lần đổi key phải huấn luyện lại toàn bộ mô hình từ đầu, làm cho revocability, vốn là ưu điểm lớn nhất của Grid Morphing, trở nên rất tốn kém. Số liệu ở Bảng~\ref{tab:sota} xác nhận các hạn chế này.
+
+FaceAnonyMixer~\cite{alam2025} giải quyết từng điểm trên bằng một cơ chế tương ứng. \textbf{(1) Biến đổi có chọn lọc theo ngữ nghĩa:} thay vì dời mọi vùng như nhau, phương pháp làm việc trong không gian $\mathcal{W}^{+}$ (18 tầng) của StyleGAN2~\cite{karras2020}, nơi các tầng tách biệt về ngữ nghĩa. Chỉ các tầng 3–7, vốn mang thuộc tính liên quan đến danh tính, được thay bằng latent sinh từ key; các tầng thô (0–2, cấu trúc, tư thế) và mịn (8–17, màu sắc, chi tiết) được giữ từ ảnh thật. Nhờ vậy bảo mật và tính tự nhiên của ảnh không còn chung một ``núm vặn''. \textbf{(2) Không khả nghịch nhờ loại bỏ thông tin:} phần latent tầng 3–7 của ảnh thật bị \emph{thay thế} chứ không bị sắp xếp lại, nên phép trộn là ánh xạ nhiều-một. Đây chính là điều mà nhóm hoán vị phải đánh đổi bằng độ chính xác mới đạt được. \textbf{(3) Tách rời các mục tiêu bằng hàm mất mát đa mục tiêu:} $\mathcal{L}_{\text{anon}}$ đẩy danh tính ảnh bảo vệ ra xa ảnh gốc; $\mathcal{L}_{\text{idp}}$ buộc các ảnh khác nhau của cùng một người, khi dùng cùng key, có danh tính nhất quán (giữ độ chính xác); $\mathcal{L}_{\text{attr}}$ giữ thuộc tính không định danh. \textbf{(4) Không huấn luyện lại khi đổi key:} bộ sinh và các encoder đều đóng băng, key chỉ đóng vai trò seed, nên thu hồi template lại rẻ như ở Grid Morphing.
+
+\begin{table}[h]
+\centering\small
+\caption{So sánh FaceAnonyMixer với CanFG (số liệu lấy từ~\cite{alam2025}, Bảng 1, 2, 3, 5). PSR: tỷ lệ bảo vệ thành công, trung bình trên 4 mô hình FR $\times$ 2 tập dữ liệu, tại FMR $=0.1\%$.}
+\label{tab:sota}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+Chỉ số & CanFG~\cite{wang2024canfg} & FaceAnonyMixer & Gốc (không bảo vệ) \\
+\midrule
+PSR ẩn danh (\%) $\uparrow$ & 38.18 & \textbf{88.73} & -- \\
+PSR không liên kết (\%) $\uparrow$ & 30.72 & \textbf{89.21} & -- \\
+Độ tin cậy Face++, CelebA-HQ $\downarrow$ & 71.37 & \textbf{53.73} & -- \\
+EER CelebA-HQ $\downarrow$ & 0.045 & \textbf{0.019} & 0.027 \\
+EER VGGFace2 $\downarrow$ & 0.101 & \textbf{0.059} & 0.074 \\
+FID CelebA-HQ $\downarrow$ & 82.52 & \textbf{37.73} & -- \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Pipeline xử lý một ảnh (chế độ online)}
+Hình tổng quan trong~\cite{alam2025} mô tả cách các thành phần được tối ưu. Hình~\ref{fig:pipeline} đi theo \emph{một} ảnh khi hệ thống vận hành, từ ảnh thô đến quyết định chấp nhận hoặc từ chối. Quy trình này chạy cho mọi ảnh, ở cả bước đăng ký lẫn xác thực, với cùng một key. \textbf{(A) Ảnh thật thành mã.} Ảnh thô được MTCNN~\cite{zhang2016mtcnn} phát hiện, cắt và căn thẳng khuôn mặt (bước 1). Sau đó encoder e4e~\cite{tov2021e4e} chuyển ảnh thành mã ẩn 18 tầng trong không gian của StyleGAN2 (bước 2). \textbf{(B) Key thành mã.} Song song, key của người dùng được dùng làm seed để StyleGAN2 sinh ra mã 18 tầng của một khuôn mặt không có thật (bước 3). \textbf{(C) Trộn và tinh chỉnh.} Hai mã được trộn theo tầng: tầng 3--7, mang danh tính, lấy từ mã sinh từ key; các tầng còn lại lấy từ mã của ảnh thật, nên tư thế, màu sắc và ánh sáng được giữ nguyên (bước 4). Mã trộn sau đó được tinh chỉnh trong 50 vòng (bước 5). Mỗi vòng, StyleGAN2 vẽ ảnh từ mã hiện tại; ArcFace~\cite{deng2019arcface} và FaRL~\cite{zheng2022farl} kiểm tra ba điều: ảnh không giống người thật, các ảnh của cùng người với cùng key cho ra cùng một người mới, và các thuộc tính như tuổi, biểu cảm được giữ; rồi chỉ mã được sửa theo kết quả kiểm tra, mọi mô hình khác giữ nguyên. \textbf{(D) Nhận dạng.} Ảnh bảo vệ cuối cùng là khuôn mặt của một người khác. Ảnh này được đưa thẳng vào một hệ FR có sẵn, không cần sửa đổi (IRSE50, IR152, FaceNet, MobileFace hoặc Face++), và so khớp với ảnh bảo vệ đã lưu lúc đăng ký bằng cùng key (bước 6).
+
+\begin{center}
+  \includegraphics[width=\linewidth]{viettoan_pipeline.png}
+  \captionof{figure}{Pipeline suy luận (online) của FaceAnonyMixer cho một ảnh đầu vào, do nhóm vẽ lại dựa trên mô tả và Algorithm~1 của~\cite{alam2025}. Mỗi cột 18 ô là 18 tầng của mã khuôn mặt; màu xanh lấy từ ảnh thật, màu cam lấy từ key. Các số 1--6 ứng với các bước được mô tả ở Mục 3.1.}
+  \label{fig:pipeline}
+\end{center}
+
+\section{Quan hệ giữa Grid Morphing và FaceAnonyMixer}
+\paragraph{Kế thừa.} FaceAnonyMixer giữ nguyên khung khái niệm của~\cite{ratha2001}. (i) Bảo vệ bằng một phép biến đổi \emph{lặp lại được, có tham số là key}, áp dụng ở miền tín hiệu, tức đầu ra là ảnh chứ không phải vector đặc trưng. (ii) Cùng key được dùng cho đăng ký và xác thực, so khớp diễn ra trong miền đã biến đổi. (iii) Thu hồi template bằng cách đổi key. (iv) Mục tiêu dùng lại bộ so khớp có sẵn. Có thể xem phép trộn latent là phiên bản ``ngữ nghĩa'' của phép dời lưới: thay vì dời các nút lưới trong không gian điểm ảnh, phương pháp mới ``dời'' các tầng mang danh tính trong không gian ẩn của mô hình sinh.
+
+\paragraph{Khác biệt về phương pháp.} Bảng~\ref{tab:rel} cho thấy các khác biệt không nằm ở mục tiêu mà ở \emph{không gian} và \emph{bản chất} của phép biến đổi, và mỗi khác biệt khớp với một hạn chế đã nêu ở Mục~1. Đổi lại, FaceAnonyMixer chuyển chi phí sang khâu tính toán: mỗi ảnh, ở cả lúc đăng ký lẫn xác thực, cần một lần nghịch đảo GAN và 50 bước tối ưu trên GPU (thực nghiệm chạy trên A100~\cite{alam2025}), trong khi Grid Morphing chỉ là một phép nội suy ảnh. Chất lượng bảo vệ cũng phụ thuộc vào độ chính xác của encoder e4e và phạm vi dữ liệu của StyleGAN2 (huấn luyện trên FFHQ). Đây là những giả định mà Grid Morphing không cần.
+
+\begin{table}[h]
+\centering\small
+\caption{Khác biệt về phương pháp giữa Grid Morphing và FaceAnonyMixer.}
+\label{tab:rel}
+\begin{tabularx}{\linewidth}{@{}l Y Y@{}}
+\toprule
+Khía cạnh & Grid Morphing~\cite{ratha2001} & FaceAnonyMixer~\cite{alam2025} \\
+\midrule
+Không gian biến đổi & Lưới điểm ảnh, căn theo điểm đặc trưng & 18 tầng latent $\mathcal{W}^{+}$ của StyleGAN2 \\
+Bản chất phép biến đổi & Nắn hình học trơn (song ánh) & Thay thế tầng (nhiều-một) + tối ưu \\
+Vai trò của key & Quyết định độ dời các nút lưới & Seed sinh latent tổng hợp $\mathbf{z}_f$ \\
+Thông tin được giữ & Toàn bộ nội dung, chỉ đổi vị trí & Thuộc tính không định danh (tư thế, màu sắc) \\
+Ràng buộc định danh & Không có & $\mathcal{L}_{\text{anon}}$, $\mathcal{L}_{\text{idp}}$, $\mathcal{L}_{\text{attr}}$ \\
+Đầu ra & Ảnh méo, có artifact & Ảnh tự nhiên trên đa tạp StyleGAN \\
+Căn chỉnh & Định vị mắt/mũi để đặt lưới & MTCNN + nghịch đảo GAN \\
+Chi phí mỗi ảnh & Một phép nội suy & Nghịch đảo + 50 bước tối ưu trên GPU \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\begin{thebibliography}{99}
+\bibitem{adler2008} A. Adler, ``Biometric system security,'' in \emph{Handbook of Biometrics}, A. K. Jain, P. Flynn, and A. A. Ross, Eds. New York, NY, USA: Springer, 2008, ch.~19, pp.~381--402.
+\bibitem{ratha2001} N. K. Ratha, J. H. Connell, and R. M. Bolle, ``Enhancing security and privacy in biometrics-based authentication systems,'' \emph{IBM Syst. J.}, vol.~40, no.~3, pp.~614--634, 2001.
+\bibitem{alam2025} M. T. Alam, F. Shamshad, F. Karray, and K. Nandakumar, ``FaceAnonyMixer: Cancelable faces via identity consistent latent space mixing,'' in \emph{Proc. IEEE Int. Joint Conf. Biometrics (IJCB)}, 2025. [Online]. Available: \url{https://arxiv.org/abs/2508.05636}
+\bibitem{iso24745} \emph{Information Security, Cybersecurity and Privacy Protection — Biometric Information Protection}, ISO/IEC 24745:2022, 2022.
+\bibitem{wang2024canfg} T. Wang, Y. Zhang, X. Xiao, L. Yuan, Z. Xia, and J. Weng, ``Make privacy renewable! Generating privacy-preserving faces supporting cancelable biometric recognition,'' in \emph{Proc. 32nd ACM Int. Conf. Multimedia (MM)}, 2024, pp.~10268--10276.
+\bibitem{ratha2006} N. K. Ratha, J. H. Connell, R. M. Bolle, and S. Chikkerur, ``Cancelable biometrics: A case study in fingerprints,'' in \emph{Proc. 18th Int. Conf. Pattern Recognit. (ICPR)}, vol.~4, 2006, pp.~370--373.
+\bibitem{ratha2007} N. K. Ratha, S. Chikkerur, J. H. Connell, and R. M. Bolle, ``Generating cancelable fingerprint templates,'' \emph{IEEE Trans. Pattern Anal. Mach. Intell.}, vol.~29, no.~4, pp.~561--572, 2007.
+\bibitem{zuo2008} J. Zuo, N. K. Ratha, and J. H. Connell, ``Cancelable iris biometric,'' in \emph{Proc. 19th Int. Conf. Pattern Recognit. (ICPR)}, 2008, pp.~1--4.
+\bibitem{hammerle2009} J. Hämmerle-Uhl, E. Pschernig, and A. Uhl, ``Cancelable iris biometrics using block re-mapping and image warping,'' in \emph{Proc. Int. Conf. Inf. Security (ISC)}, LNCS vol.~5735, 2009, pp.~135--142.
+\bibitem{ghafourian2023} M. Ghafourian, J. Fierrez, R. Vera-Rodriguez, A. Morales, and I. Serna, ``OTB-morph: One-time biometrics via morphing,'' \emph{Mach. Intell. Res.}, vol.~20, no.~6, pp.~855--871, 2023.
+\bibitem{karras2020} T. Karras, S. Laine, M. Aittala, J. Hellsten, J. Lehtinen, and T. Aila, ``Analyzing and improving the image quality of StyleGAN,'' in \emph{Proc. IEEE/CVF Conf. Comput. Vis. Pattern Recognit. (CVPR)}, 2020, pp.~8110--8119.
+\bibitem{tov2021e4e} O. Tov, Y. Alaluf, Y. Nitzan, O. Patashnik, and D. Cohen-Or, ``Designing an encoder for StyleGAN image manipulation,'' \emph{ACM Trans. Graph.}, vol.~40, no.~4, pp.~1--14, 2021.
+\bibitem{zhang2016mtcnn} K. Zhang, Z. Zhang, Z. Li, and Y. Qiao, ``Joint face detection and alignment using multitask cascaded convolutional networks,'' \emph{IEEE Signal Process. Lett.}, vol.~23, no.~10, pp.~1499--1503, 2016.
+\bibitem{deng2019arcface} J. Deng, J. Guo, N. Xue, and S. Zafeiriou, ``ArcFace: Additive angular margin loss for deep face recognition,'' in \emph{Proc. IEEE/CVF Conf. Comput. Vis. Pattern Recognit. (CVPR)}, 2019, pp.~4690--4699.
+\bibitem{zheng2022farl} Y. Zheng \emph{et al.}, ``General facial representation learning in a visual-linguistic manner,'' in \emph{Proc. IEEE/CVF Conf. Comput. Vis. Pattern Recognit. (CVPR)}, 2022, pp.~18697--18709.
+\end{thebibliography}
+
+\end{document}
