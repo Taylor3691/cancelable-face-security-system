@@ -37,6 +37,7 @@ class VGGFace2(data.Dataset):
                  fake_nn_map=None,
                  inv: bool = False,
                  anon=None,
+                 dataset_name: str = 'vggface2',
                  transform=None):
         self.root_dir  = root_dir
         self.train_dir = osp.join(root_dir, 'train')
@@ -50,8 +51,9 @@ class VGGFace2(data.Dataset):
         ])
 
         # Inversion paths (matches invert.py output: reconstructed/ and latents/)
-        self.inv_data_dir  = osp.join('datasets', 'inv_pivot', 'vggface2', 'reconstructed')
-        self.inv_codes_dir = osp.join('datasets', 'inv_pivot', 'vggface2', 'latents')
+        inv_root = osp.join('datasets', 'inv_pivot', dataset_name)
+        self.inv_data_dir  = osp.join(inv_root, 'reconstructed')
+        self.inv_codes_dir = osp.join(inv_root, 'latents')
 
         # NN map
         self.fake_dataset_root = None

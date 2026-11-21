@@ -32,6 +32,7 @@ from torch.utils import data
 from torchvision import transforms
 from tqdm import tqdm
 
+from invert import _build_e4e, _get_latents
 from lib import (
     DATASETS, CelebAHQ,
     DataParallelPassthrough,
@@ -58,7 +59,7 @@ class IdentityLatentCode(LatentCode):
 # ── helpers ───────────────────────────────────────────────────────────────────
 
 def _build_identity_mapping(dataset_root: str) -> dict:
-    """Return {image_id (int): identity_folder (str)} for every training image."""
+    """Return {image_stem (str): identity_folder (str)} for every training image."""
     train_dir  = osp.join(dataset_root, 'train')
     id_mapping = {}
     for folder in os.listdir(train_dir):
@@ -67,11 +68,8 @@ def _build_identity_mapping(dataset_root: str) -> dict:
             continue
         for img_name in os.listdir(folder_path):
             if img_name.lower().endswith(('.jpg', '.jpeg', '.png')):
-                try:
-                    img_id = int(osp.splitext(img_name)[0])
-                    id_mapping[img_id] = folder
-                except ValueError:
-                    pass
+                img_stem = osp.splitext(img_name)[0]
+                id_mapping[img_stem] = folder
     return id_mapping
 
 
@@ -179,10 +177,13 @@ def main():
     # ── group images by identity ──────────────────────────────────────────────
     identity_groups = defaultdict(list)
     for data_ in loader:
-        img_id  = int(osp.basename(data_[2][0]).split('.')[0])
+        img_id  = osp.splitext(osp.basename(data_[2][0]))[0]
         id_fold = id_mapping.get(img_id)
         if id_fold:
             identity_groups[id_fold].append(data_)
+
+    # Lazy-loaded e4e encoder for encoding augmented views of single-image IDs (Alg. 1, Step 4)
+    e4e = None
 
     # ── per-identity optimisation ─────────────────────────────────────────────
     desc = f'Anonymizing {args.dataset}' if args.verbose else ''
@@ -193,11 +194,17 @@ def main():
             base_data   = identity_data[0]
             img_orig    = base_data[0]
             aug_images  = augmenter(img_orig)
+            if e4e is None:
+                e4e = _build_e4e(device)
+            aug_batch = torch.cat(aug_images, dim=0).to(device)
+            with torch.no_grad():
+                aug_latents = _get_latents(e4e, aug_batch).cpu()
             # Build synthetic data entries for augmented views
             extra = []
-            for aug_img in aug_images:
+            for idx, aug_img in enumerate(aug_images):
                 aug_entry       = list(base_data)
                 aug_entry[0]    = aug_img
+                aug_entry[6]    = aug_latents[idx:idx + 1]
                 extra.append(aug_entry)
             identity_data = [base_data] + extra
 
@@ -209,12 +216,10 @@ def main():
         data_refs    = []
 
         for data_ in identity_data:
-            img_orig     = data_[0].to(device)
-            img_id       = int(osp.basename(data_[2][0]).split('.')[0])
-            img_nn_code  = data_[4].to(device)
+            img_orig       = data_[0].to(device)
+            img_id         = osp.splitext(osp.basename(data_[2][0]))[0]
+            img_nn_code    = data_[4].to(device)
             img_recon_code = data_[6].to(device)
-
-            orig_images.append(img_orig)
 
             lc = IdentityLatentCode(
                 latent_code_real=img_recon_code,
@@ -228,6 +233,7 @@ def main():
             if not lc.do_optim():
                 continue
 
+            orig_images.append(img_orig)
             latent_codes.append(lc)
             data_refs.append(data_)
 
@@ -252,11 +258,10 @@ def main():
                 anon_images.append(G(lc()))
 
             anon_batch   = torch.cat(anon_images)          # (N, 3, H, W)
-            orig_batch   = torch.cat(orig_images[:len(anon_images)])
 
             total_id   = sum(id_criterion(ai, oi)
                              for ai, oi in zip(anon_images, orig_images))
-            total_attr = sum(attr_loss_fn(oi, ai)
+            total_attr = sum(attr_loss_fn(ai, oi)
                              for ai, oi in zip(anon_images, orig_images))
             cons       = cons_loss_fn(anon_batch)
 
@@ -273,7 +278,7 @@ def main():
         # -- Save results --
         saved_ids = set()
         for lc, data_ in zip(latent_codes, data_refs):
-            img_id = int(osp.basename(data_[2][0]).split('.')[0])
+            img_id = osp.splitext(osp.basename(data_[2][0]))[0]
             if img_id in saved_ids:
                 continue  # skip augmented duplicates so original view isn't overwritten
             saved_ids.add(img_id)
