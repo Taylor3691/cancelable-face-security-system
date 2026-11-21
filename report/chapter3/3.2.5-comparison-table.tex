@@ -1,0 +1,135 @@
+% =====================================================================
+% Bảng so sánh tổng hợp các phương pháp CFB (mục 5 của phần Related work)
+% Được nạp từ chapter3/3.2-related_work.tex
+% Chỉ dùng gói đã có trong main.tex (array, float, setspace, amsmath)
+% và các kiểu cột L{}/C{} định nghĩa sẵn trong main.tex.
+% Tài liệu tham khảo: refs/references.bib
+% Nguồn từng ô: xem tài liệu đối chiếu nguồn của người viết mục này
+% =====================================================================
+
+\providecommand{\cOK}{\ensuremath{\surd}}       % đạt
+\providecommand{\cNO}{\ensuremath{\times}}      % không đạt
+\providecommand{\cPT}{\ensuremath{\sim}}        % đạt một phần
+\providecommand{\cNA}{--}                       % bài báo không đánh giá
+\providecommand{\cINF}{\ensuremath{^{\dagger}}} % suy luận của nhóm
+\providecommand{\cCF}{\ensuremath{^{\ddagger}}}  % các nguồn mâu thuẫn nhau
+\ifdefined\cfbcolw\else\newlength{\cfbcolw}\fi % độ rộng mỗi cột phương pháp
+
+\clearpage
+\subsection{Bảng so sánh tổng hợp các phương pháp CFB}
+\label{sec:cfb-comparison}
+
+\begin{table}[H]
+\centering
+\caption{So sánh các phương pháp sinh trắc khuôn mặt có thể hủy (theo bài gốc và \cite{alam2025})}
+\label{tab:cfb-comparison}
+\begin{spacing}{1.0}
+\fontsize{7.6}{8.9}\selectfont
+\setlength{\tabcolsep}{1.8pt}
+\renewcommand{\arraystretch}{1.04}
+% Kéo bảng ra đúng bằng chiều rộng vùng chữ: chia đều phần còn lại cho 9 cột phương pháp.
+\setlength{\cfbcolw}{\dimexpr(\textwidth-1.6cm-20\tabcolsep-11\arrayrulewidth)/9\relax}
+\begin{tabular}{|>{\bfseries\raggedright\arraybackslash}m{1.6cm}|*{9}{L{\cfbcolw}|}}
+\hline
+Tiêu chí
+& Bio\-Hashing \cite{teoh2006}
+& Adaptive Bloom filter \cite{rathgeb2013}
+& Block permu\-tation \cite{ratha2001}
+& Image morphing \cite{ghafourian2023}
+& MLP-Hash \cite{shahreza2023mlp}
+& Deep\-Privacy \cite{hukkelas2019} / CIAGAN \cite{maximov2020}
+& DP-CGAN \cite{torkz2019}\textsuperscript{*}
+& CanFG \cite{wang2024canfg}
+& \textbf{Face\-Anony\-Mixer} \cite{alam2025} \\
+\hline
+Tương thích hệ thống FR
+& \cNO\ Cần bộ so khớp Hamming riêng trên mã nhị phân
+& \cNO\ Cần bộ so khớp riêng trên bộ lọc Bloom
+& \cOK\ Ảnh đưa thẳng vào FR có sẵn
+& \cOK\ Ảnh đưa thẳng vào FR có sẵn
+& \cNO\ Cần so khớp Hamming riêng \cite{shahreza2023mlp}
+& \cPT\ Dùng được cho phát hiện/theo dõi mặt, không hỗ trợ xác thực
+& Không áp dụng: sinh dữ liệu MNIST, không xử lý ảnh mặt
+& \cNO\ Xác thực cần bộ trích xuất VID riêng
+& \cOK\ Dùng trực tiếp với FR và API thương mại \\
+\hline
+Mức độ bảo vệ danh tính
+& \cNA & \cNA & \cNA & \cNA & \cNA
+& \cOK\ Thay thế đặc trưng danh tính
+& \cNA
+& \cPT\ PSR 99{,}2\% tự báo cáo; 38{,}2\% theo \cite{alam2025}\cCF
+& \cOK\ PSR 88{,}7\% (FMR 0{,}1\%), cao hơn CanFG \\
+\hline
+Chất lượng thị giác
+& Không sinh ảnh (chỉ lưu mã)
+& Không sinh ảnh (chỉ lưu mã)
+& \cNO\ Ảnh vỡ khối, thiếu tự nhiên, dễ bị phát hiện
+& \cNO\ Có lỗi ảnh, hạn chế tính khả dụng
+& Không sinh ảnh (chỉ lưu mã)
+& Giữ tư thế và nền ảnh gốc; ảnh 128$\times$128 \cite{hukkelas2019}
+& \cNO\ Riêng tư vi phân làm giảm chất lượng
+& \cPT\ FID 9{,}4 (128~px, tự báo cáo) nhưng 82{,}5 theo \cite{alam2025}\cCF
+& \cOK\ FID 37{,}7, ảnh chân thực \\
+\hline
+Không gian thao tác
+& Đặc trưng: vector $\to$ mã nhị phân
+& Đặc trưng: mã nhị phân $\to$ Bloom filter
+& Ảnh (miền pixel)
+& Ảnh (miền pixel)
+& Đặc trưng: embedding $\to$ MLP ngẫu nhiên
+& Ảnh, qua GAN có điều kiện
+& Ảnh, qua GAN có riêng tư vi phân
+& Embedding ArcFace $\to$ ảnh (U-Net)
+& Không gian ẩn $\mathcal{W}^{+}$ của StyleGAN2 \\
+\hline
+Hủy \& cấp khóa mới
+& \cOK\ Đổi token ngẫu nhiên là có mẫu mới
+& \cOK\ Thu hồi bằng đổi seed bí mật của người dùng
+& \cOK\ Đổi khóa hoán vị là có mẫu mới\cINF
+& \cOK\ Khóa thay đổi theo từng lần dùng
+& \cOK\ Đổi MLP ngẫu nhiên theo người dùng
+& \cNO\ Không có khóa để thu hồi
+& \cNO\ Không có khóa để thu hồi
+& \cPT\ Hủy được nhưng phải huấn luyện lại CanFG và bộ VID
+& \cOK\ Không huấn luyện lại; chỉ tối ưu lại mã ẩn từng ảnh \\
+\hline
+Tính không thể liên kết
+& \cOK\ $D_{\leftrightarrow}^{sys}$ = 0{,}009 khi khóa độc lập \cite{shahreza2023mlp}; \cite{alam2025} cho là thiếu\cCF
+& \cPT\ Dùng bí mật theo ứng dụng, nhưng bị tấn công liên kết $\geq$96\% \cite{hermans2014}\cCF
+& \cNA & \cNA
+& \cOK\ $D_{\leftrightarrow}^{sys}$ = 0{,}010 \cite{shahreza2023mlp}
+& \cNO\ Không có khóa nên không xét được\cINF
+& \cNO\ Không có khóa nên không xét được\cINF
+& \cPT\ Tách biệt ở miền VID, nhưng ảnh từ các khóa ít khác biệt\cCF
+& \cOK\ PSR 89\%, $D_{\leftrightarrow}^{sys}$ = 0{,}12 \\
+\hline
+Tính không thể đảo ngược
+& \cNO\ Lộ khóa: SAR 43{,}8\% \cite{shahreza2023mlp}
+& \cPT\ Một chiều chỉ khi dữ liệu ngẫu nhiên đều \cite{hermans2014}\cCF
+& \cNO\ Hoán vị khả nghịch khi lộ khóa\cINF
+& \cNA
+& \cPT\ Lộ khóa: SAR 39{,}1\%, tương đương BioHashing
+& \cOK\ Bộ sinh không thấy pixel mặt gốc \cite{hukkelas2019}
+& \cNA
+& \cPT\ Bị phá nếu lộ cả CanFG và bộ VID
+& \cOK\ Biết cả khóa lẫn ảnh bảo vệ vẫn không tái tạo được \\
+\hline
+Bảo toàn hiệu năng nhận dạng
+& \cPT\ Tốt khi khóa bí mật; chung khóa giảm (FaceNet, IncResNetV2) \cite{shahreza2023mlp}
+& \cNA
+& \cNO\ Làm giảm độ chính xác
+& \cPT\ Tác giả gốc báo cải thiện; lỗi ảnh hạn chế khả dụng \cite{alam2025}\cCF
+& \cPT\ Tốt khi khóa bí mật; chung khóa giảm (FaceNet, IncResNetV2)
+& \cNO\ Không thiết kế để xác thực; danh tính giả không gắn khóa người dùng\cINF
+& Không áp dụng: chỉ đo phân loại MNIST
+& \cOK\ EER 0{,}045 nhờ phép quay trực giao giữ khoảng cách
+& \cOK\ EER 0{,}019; chung khóa vẫn tách biệt (định tính) \\
+\hline
+\end{tabular}
+
+\vspace{4pt}
+\raggedright
+\textbf{Ký hiệu:} \cOK\ đạt; \cNO\ không đạt; \cPT\ đạt một phần; \cNA\ bài báo không đánh giá; \cINF\ suy luận của nhóm từ nguyên lý phương pháp; \cCF\ các nguồn mâu thuẫn nhau. Cột FaceAnonyMixer là kết quả do chính tác giả báo cáo. \textsuperscript{*}DP-CGAN chỉ được thử trên MNIST, không phải ảnh khuôn mặt; đánh giá theo \cite{alam2025}.
+\end{spacing}
+\end{table}
+\clearpage
